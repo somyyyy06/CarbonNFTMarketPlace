@@ -45,10 +45,18 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="d-grid gap-2">
-                                <span class="badge bg-success mb-2">Delivered</span>
+                                <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'returned' %}bg-danger{% else %}bg-warning{% endif %} mb-2">
+                                    {% if order.status == 'delivered' %}Delivered{% elif order.status == 'returned' %}Returned{% else %}Processing{% endif %}
+                                </span>
                                 <button class="btn btn-outline-primary btn-sm">Track Package</button>
-                                <button class="btn btn-outline-warning btn-sm">Write Review</button>
-                                <a href="/returns" class="btn btn-outline-danger btn-sm">Return/Exchange</a>
+                                <button class="btn btn-outline-warning btn-sm feedback-btn" data-order-id="{{ order.id }}" data-product-name="{{ order.product.name }}">
+                                    Write Review
+                                </button>
+                                {% if order.status == 'delivered' %}
+                                <button class="btn btn-outline-danger btn-sm return-btn" data-order-id="{{ order.id }}" data-product-name="{{ order.product.name }}">
+                                    Return Item
+                                </button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -77,4 +85,185 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Feedback Form</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Your feedback</h4>
+                        <p class="text-muted">is really valuable for us</p>
+                        <p class="small">Your input is important, and it helps us get better at what we do.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <form id="feedbackForm">
+                            <div class="mb-3">
+                                <label class="form-label">Name:</label>
+                                <input type="text" class="form-control" id="feedbackName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="feedbackEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Feedback:</label>
+                                <textarea class="form-control" id="feedbackText" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Rating:</label>
+                                <select class="form-select" id="feedbackRating" required>
+                                    <option value="">Select Rating</option>
+                                    <option value="5">5 - Excellent</option>
+                                    <option value="4">4 - Good</option>
+                                    <option value="3">3 - Average</option>
+                                    <option value="2">2 - Poor</option>
+                                    <option value="1">1 - Terrible</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100">Submit Feedback</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Return Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Return Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="returnForm">
+                    <div class="mb-3">
+                        <label class="form-label">Product:</label>
+                        <input type="text" class="form-control" id="returnProductName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Return:</label>
+                        <select class="form-select" id="returnReason" required>
+                            <option value="">Select Reason</option>
+                            <option value="defective">Defective Product</option>
+                            <option value="wrong_item">Wrong Item Received</option>
+                            <option value="not_as_described">Not as Described</option>
+                            <option value="damaged">Damaged in Transit</option>
+                            <option value="changed_mind">Changed Mind</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional Comments:</label>
+                        <textarea class="form-control" id="returnComments" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">Process Return</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentOrderId = null;
+    
+    // Feedback modal handling
+    document.querySelectorAll('.feedback-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentOrderId = this.dataset.orderId;
+            const productName = this.dataset.productName;
+            document.getElementById('feedbackName').value = '{{ session.get("user_name", "Demo User") }}';
+            document.getElementById('feedbackEmail').value = '{{ session.get("user_id", "demo@walmart.com") }}';
+            new bootstrap.Modal(document.getElementById('feedbackModal')).show();
+        });
+    });
+    
+    // Return modal handling
+    document.querySelectorAll('.return-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentOrderId = this.dataset.orderId;
+            const productName = this.dataset.productName;
+            document.getElementById('returnProductName').value = productName;
+            new bootstrap.Modal(document.getElementById('returnModal')).show();
+        });
+    });
+    
+    // Feedback form submission
+    document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const feedbackData = {
+            order_id: parseInt(currentOrderId),
+            name: document.getElementById('feedbackName').value,
+            email: document.getElementById('feedbackEmail').value,
+            feedback: document.getElementById('feedbackText').value,
+            rating: document.getElementById('feedbackRating').value
+        };
+        
+        fetch('/submit_feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(feedbackData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Feedback submitted successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('feedbackModal')).hide();
+                this.reset();
+            } else {
+                alert('Error submitting feedback: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error submitting feedback');
+        });
+    });
+    
+    // Return form submission
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const returnData = {
+            order_id: parseInt(currentOrderId),
+            reason: document.getElementById('returnReason').value,
+            comments: document.getElementById('returnComments').value
+        };
+        
+        fetch('/return_product', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(returnData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Return processed successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('returnModal')).hide();
+                location.reload(); // Refresh to show updated status
+            } else {
+                alert('Error processing return: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error processing return');
+        });
+    });
+});
+</script>
 {% endblock %}

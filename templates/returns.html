@@ -52,8 +52,11 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="d-grid gap-2">
-                                <span class="badge bg-warning text-dark mb-2">Return Eligible</span>
-                                <button class="btn btn-primary btn-sm">Return Item</button>
+                                {% set days_since = (order.timestamp | length > 10) and ((order.timestamp[:10] | strptime('%Y-%m-%d')) | int) or 0 %}
+                                <span class="badge bg-warning text-dark mb-2">Return Eligible ({{ 30 - ((order.timestamp[:10] | strptime('%Y-%m-%d')) | datetimeformat('%s') | int - now().timestamp() | int) // 86400 }} days left)</span>
+                                <button class="btn btn-primary btn-sm return-btn" data-order-id="{{ order.id }}" data-product-name="{{ order.product.name }}">
+                                    Return Item
+                                </button>
                                 <button class="btn btn-outline-primary btn-sm">Exchange Item</button>
                                 <button class="btn btn-outline-secondary btn-sm">Print Return Label</button>
                             </div>
@@ -111,4 +114,90 @@
         </div>
     </div>
 </div>
+
+<!-- Return Modal -->
+<div class="modal fade" id="returnModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Return Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="returnForm">
+                    <div class="mb-3">
+                        <label class="form-label">Product:</label>
+                        <input type="text" class="form-control" id="returnProductName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Return:</label>
+                        <select class="form-select" id="returnReason" required>
+                            <option value="">Select Reason</option>
+                            <option value="defective">Defective Product</option>
+                            <option value="wrong_item">Wrong Item Received</option>
+                            <option value="not_as_described">Not as Described</option>
+                            <option value="damaged">Damaged in Transit</option>
+                            <option value="changed_mind">Changed Mind</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional Comments:</label>
+                        <textarea class="form-control" id="returnComments" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">Process Return</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentOrderId = null;
+    
+    // Return modal handling
+    document.querySelectorAll('.return-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentOrderId = this.dataset.orderId;
+            const productName = this.dataset.productName;
+            document.getElementById('returnProductName').value = productName;
+            new bootstrap.Modal(document.getElementById('returnModal')).show();
+        });
+    });
+    
+    // Return form submission
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const returnData = {
+            order_id: parseInt(currentOrderId),
+            reason: document.getElementById('returnReason').value,
+            comments: document.getElementById('returnComments').value
+        };
+        
+        fetch('/return_product', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(returnData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Return processed successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('returnModal')).hide();
+                location.reload(); // Refresh to show updated status
+            } else {
+                alert('Error processing return: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error processing return');
+        });
+    });
+});
+</script>
 {% endblock %}

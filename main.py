@@ -332,6 +332,19 @@ def purchase():
                     
                     total_co2_saved += co2_saved
                     total_spent += price
+                    
+                    # Record each item purchase
+                    for _ in range(item['quantity']):
+                        purchase_record = {
+                            'id': len(purchases_db) + 1,
+                            'user_id': user_id,
+                            'product': product,
+                            'timestamp': datetime.now().isoformat(),
+                            'co2_saved': product['co2_saved'],
+                            'type': 'eco',
+                            'status': 'delivered'
+                        }
+                        purchases_db.append(purchase_record)
             else:
                 product = next((p for p in REGULAR_PRODUCTS if p['id'] == item['id']), None)
                 if product:
@@ -339,6 +352,19 @@ def purchase():
                     user_data['total_spent'] += price
                     user_data['total_products'] += item['quantity']
                     total_spent += price
+                    
+                    # Record each item purchase
+                    for _ in range(item['quantity']):
+                        purchase_record = {
+                            'id': len(purchases_db) + 1,
+                            'user_id': user_id,
+                            'product': product,
+                            'timestamp': datetime.now().isoformat(),
+                            'co2_saved': 0,
+                            'type': 'regular',
+                            'status': 'delivered'
+                        }
+                        purchases_db.append(purchase_record)
         
         # Check for new NFT badges
         if total_co2_saved > 0:
@@ -393,7 +419,8 @@ def purchase():
             'product': product,
             'timestamp': datetime.now().isoformat(),
             'co2_saved': co2_saved,
-            'type': product_type
+            'type': product_type,
+            'status': 'delivered'
         }
         purchases_db.append(purchase_record)
         
@@ -661,10 +688,10 @@ def returns():
     cart = get_cart(user_id)
     wishlist = get_wishlist(user_id)
     
-    # Get user's orders that can be returned (within 30 days)
+    # Get user's orders that can be returned (within 30 days and not already returned)
     returnable_orders = []
     for purchase in purchases_db:
-        if purchase['user_id'] == user_id:
+        if purchase['user_id'] == user_id and purchase.get('status') == 'delivered':
             purchase_date = datetime.fromisoformat(purchase['timestamp'])
             days_since_purchase = (datetime.now() - purchase_date).days
             if days_since_purchase <= 30:
@@ -673,6 +700,18 @@ def returns():
     return render_template('returns.html',
                          user_data=user_data,
                          returnable_orders=returnable_orders,
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
+
+@app.route('/feedback')
+def feedback():
+    user_id = session.get('user_id', 'demo_user')
+    user_data = get_user_data(user_id)
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    
+    return render_template('feedback.html',
+                         user_data=user_data,
                          cart_count=len(cart),
                          wishlist_count=len(wishlist))
 
@@ -694,6 +733,62 @@ def user_badges():
             user_badges.append(badge_data)
     
     return jsonify({'badges': user_badges})
+
+@app.route('/submit_feedback', methods=['POST'])
+def submit_feedback():
+    user_id = session.get('user_id', 'demo_user')
+    data = request.json
+    
+    feedback_record = {
+        'id': len(purchases_db) + 1000,  # Offset to avoid ID conflicts
+        'user_id': user_id,
+        'order_id': data.get('order_id'),
+        'name': data.get('name'),
+        'email': data.get('email'),
+        'feedback': data.get('feedback'),
+        'rating': data.get('rating'),
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    # You could store this in a feedback_db, but for demo purposes, we'll just acknowledge it
+    return jsonify({'success': True, 'message': 'Feedback submitted successfully!'})
+
+@app.route('/return_product', methods=['POST'])
+def return_product():
+    user_id = session.get('user_id', 'demo_user')
+    data = request.json
+    order_id = data.get('order_id')
+    reason = data.get('reason')
+    
+    # Find the order
+    order = next((purchase for purchase in purchases_db if purchase['id'] == order_id and purchase['user_id'] == user_id), None)
+    
+    if not order:
+        return jsonify({'success': False, 'message': 'Order not found'})
+    
+    # Check if return window is still open (30 days)
+    purchase_date = datetime.fromisoformat(order['timestamp'])
+    days_since_purchase = (datetime.now() - purchase_date).days
+    
+    if days_since_purchase > 30:
+        return jsonify({'success': False, 'message': 'Return window has expired'})
+    
+    # Update order status
+    order['status'] = 'returned'
+    order['return_reason'] = reason
+    order['return_date'] = datetime.now().isoformat()
+    
+    # Update user data (reverse the effects)
+    user_data = get_user_data(user_id)
+    user_data['total_spent'] -= order['product']['price']
+    user_data['total_products'] -= 1
+    
+    if order['type'] == 'eco':
+        user_data['total_co2_saved'] -= order['co2_saved']
+        user_data['monthly_co2_saved'] -= order['co2_saved']
+        user_data['eco_products_purchased'] -= 1
+    
+    return jsonify({'success': True, 'message': 'Return processed successfully!'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
