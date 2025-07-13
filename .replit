@@ -24,3 +24,15 @@ language = "python3"
 # for Python repos imported from GitHub
 [gitHubImport]
 requiredFiles = [".replit", "replit.nix", ".config", "venv"]
+
+[workflows]
+runButton = "Run EcoMart NFT App"
+
+[[workflows.workflow]]
+name = "Run EcoMart NFT App"
+author = 44972928
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"

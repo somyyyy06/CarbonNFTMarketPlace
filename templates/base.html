@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EcoMart - Sustainable Shopping with NFT Rewards{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .walmart-blue { background-color: #004c91; }
+        .walmart-yellow { background-color: #ffc220; }
+        .eco-green { background-color: #22c55e; }
+        .eco-orange { background-color: #f97316; }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.8rem;
+        }
+        
+        .search-container {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 0 2rem;
+        }
+        
+        .co2-badge {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .nft-badge {
+            border-radius: 15px;
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nft-badge:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .nft-badge.earned {
+            background: linear-gradient(135deg, var(--badge-color), var(--badge-color-dark));
+            color: white;
+        }
+        
+        .nft-badge.locked {
+            background: #6c757d;
+            color: #fff;
+            opacity: 0.7;
+        }
+        
+        .badge-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .mint-button {
+            background: linear-gradient(135deg, #ffc220, #ffb000);
+            border: none;
+            color: #004c91;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .mint-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 194, 32, 0.4);
+            color: #004c91;
+        }
+        
+        .eco-stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-left: 4px solid #22c55e;
+            border-radius: 8px;
+        }
+        
+        .purchase-item {
+            border-left: 3px solid #22c55e;
+            background: #f8fffe;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg walmart-blue">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand text-white d-flex align-items-center" href="/">
+                <i class="fas fa-star me-2"></i>
+                EcoMart
+            </a>
+            
+            <div class="search-container">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search everything at EcoMart online and in store">
+                    <button class="btn walmart-yellow" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center text-white">
+                <div class="me-4 text-center">
+                    <div class="nav-icon"><i class="fas fa-heart"></i></div>
+                    <small>Wishlist</small>
+                </div>
+                <div class="me-4 text-center">
+                    <div class="nav-icon"><i class="fas fa-user"></i></div>
+                    <small>Account</small>
+                </div>
+                <div class="text-center">
+                    <div class="nav-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <small>$0.00</small>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Sub Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container-fluid px-4">
+            <div class="d-flex w-100">
+                <div class="d-flex align-items-center">
+                    <a href="/" class="nav-link me-4"><i class="fas fa-bars me-2"></i>Departments</a>
+                    <a href="/" class="nav-link me-4"><i class="fas fa-tools me-2"></i>Services</a>
+                    <a href="/" class="nav-link me-4">Get it Fast</a>
+                    <a href="/" class="nav-link me-4">New Arrivals</a>
+                    <a href="/" class="nav-link me-4">Deals</a>
+                    <a href="/" class="nav-link me-4">Trending</a>
+                    <a href="/" class="nav-link me-4 eco-green text-white px-3 py-2 rounded">
+                        <i class="fas fa-leaf me-2"></i>EcoProducts
+                    </a>
+                    <a href="/rewards" class="nav-link">Rewards</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // Global functions for the app
+        function showSuccess(title, text) {
+            Swal.fire({
+                icon: 'success',
+                title: title,
+                text: text,
+                confirmButtonColor: '#22c55e'
+            });
+        }
+        
+        function showError(title, text) {
+            Swal.fire({
+                icon: 'error',
+                title: title,
+                text: text,
+                confirmButtonColor: '#dc3545'
+            });
+        }
+        
+        function showNFTReward(badges) {
+            if (badges && badges.length > 0) {
+                const badge = badges[0];
+                Swal.fire({
+                    icon: 'success',
+                    title: '🎉 New NFT Badge Earned!',
+                    html: `
+                        <div class="text-center">
+                            <div class="fs-1 mb-3">🏆</div>
+                            <h4>${badge.name}</h4>
+                            <p>You've earned a new NFT badge for your environmental contribution!</p>
+                            <div class="co2-badge d-inline-block">
+                                ${badge.co2_saved} kg CO₂ saved
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonText: 'View Badges',
+                    confirmButtonColor: '#22c55e',
+                    showCancelButton: true,
+                    cancelButtonText: 'Continue Shopping'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/rewards';
+                    }
+                });
+            }
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

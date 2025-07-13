@@ -1,0 +1,295 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Badge Collection Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title d-flex align-items-center">
+                        <i class="fas fa-medal me-3 text-warning"></i>
+                        Badge Collection (NFT Ready)
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Earn NFT badges by reducing your carbon footprint through eco-friendly purchases. 
+                        Each badge represents your environmental contribution and can be minted as a unique NFT.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NFT Badge Tiers -->
+    <div class="row mb-5">
+        {% for tier_id, tier in tier_progress.items() %}
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card nft-badge h-100 {% if tier.earned %}earned{% else %}locked{% endif %}" 
+                 style="--badge-color: {{ tier.color }}; --badge-color-dark: {{ tier.color }}dd;">
+                <div class="card-body text-center">
+                    <div class="position-absolute top-0 end-0 m-3">
+                        {% if tier.earned %}
+                            <i class="fas fa-check-circle text-white"></i>
+                        {% else %}
+                            <i class="fas fa-lock"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="badge-icon">
+                        {% if tier_id == 'green_starter' %}
+                            <i class="fas fa-seedling"></i>
+                        {% elif tier_id == 'eco_warrior' %}
+                            <i class="fas fa-shield-alt"></i>
+                        {% elif tier_id == 'planet_protector' %}
+                            <i class="fas fa-globe"></i>
+                        {% elif tier_id == 'climate_champion' %}
+                            <i class="fas fa-crown"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <h5 class="card-title">{{ tier.name }}</h5>
+                    <p class="small">Save {{ tier.co2_required }}kg CO₂</p>
+                    
+                    {% if tier.earned %}
+                        <div class="badge bg-light text-dark mb-3">Earned!</div>
+                        <button class="btn mint-button w-100" onclick="mintNFT('{{ tier_id }}')">
+                            <i class="fas fa-coins me-2"></i>
+                            Mint NFT
+                        </button>
+                    {% else %}
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {{ tier.progress }}%"></div>
+                        </div>
+                        <small>{{ "%.1f"|format(tier.remaining) }}kg to go</small>
+                        <p class="small mt-2">Progress: {{ "%.0f"|format(tier.progress) }}%</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Coming Soon: NFT Minting -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5 class="card-title d-flex align-items-center text-primary">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Coming Soon: NFT Minting
+                    </h5>
+                    <p class="card-text">
+                        These badges will be minted as unique NFTs on the blockchain, allowing you to own, display, and showcase your climate contributions. 
+                        Each NFT will contain metadata about your environmental impact, making your eco-friendly actions permanent and verifiable.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Unique artwork for each tier</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Verifiable CO₂ savings data</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Transferable ownership</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Smart contract integration</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Your Earned NFT Badges -->
+    {% if user_nft_badges %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-trophy me-2 text-warning"></i>
+                Your Earned NFT Badges
+            </h4>
+            
+            <div class="row">
+                {% for badge in user_nft_badges %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="card-title">{{ badge.name }}</h6>
+                                {% if badge.get('minted') %}
+                                    <span class="badge bg-success">Minted</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Ready to Mint</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="text-center mb-3">
+                                <div class="fs-1">
+                                    {% if badge.tier == 'green_starter' %}🌱
+                                    {% elif badge.tier == 'eco_warrior' %}🛡️
+                                    {% elif badge.tier == 'planet_protector' %}🌍
+                                    {% elif badge.tier == 'climate_champion' %}👑
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="small text-muted mb-3">
+                                <div><strong>CO₂ Saved:</strong> {{ "%.1f"|format(badge.co2_saved) }} kg</div>
+                                <div><strong>Earned:</strong> {{ badge.earned_date[:10] }}</div>
+                                {% if badge.get('mint_hash') %}
+                                <div><strong>Hash:</strong> {{ badge.mint_hash[:16] }}...</div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if not badge.get('minted') %}
+                            <button class="btn mint-button w-100" onclick="mintNFT('{{ badge.id }}')">
+                                <i class="fas fa-coins me-2"></i>
+                                Mint as NFT
+                            </button>
+                            {% else %}
+                            <button class="btn btn-outline-success w-100" disabled>
+                                <i class="fas fa-check me-2"></i>
+                                NFT Minted
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Stats Overview -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fs-1 text-success mb-2">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h5>{{ "%.1f"|format(user_data.total_co2_saved) }} kg</h5>
+                    <p class="text-muted mb-0">Total CO₂ Saved</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fs-1 text-warning mb-2">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <h5>{{ user_data.nft_badges|length }}</h5>
+                    <p class="text-muted mb-0">Badges Earned</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fs-1 text-primary mb-2">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h5>{{ user_data.eco_products_purchased }}</h5>
+                    <p class="text-muted mb-0">Eco Products Purchased</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Call to Action -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card eco-green text-white text-center">
+                <div class="card-body py-5">
+                    <h3 class="card-title">Ready to Earn More Badges?</h3>
+                    <p class="card-text fs-5 mb-4">
+                        Continue shopping eco-friendly products to unlock new NFT badges and increase your environmental impact!
+                    </p>
+                    <a href="/" class="btn walmart-yellow text-dark fw-bold btn-lg">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Shop Eco Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function mintNFT(badgeId) {
+    Swal.fire({
+        title: 'Mint NFT Badge',
+        text: 'Are you ready to mint this badge as an NFT?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Mint NFT!',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#ffc220',
+        cancelButtonColor: '#6c757d'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show minting process
+            Swal.fire({
+                title: 'Minting NFT...',
+                text: 'Please wait while we mint your NFT badge',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('/mint_nft', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    badge_id: badgeId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'NFT Minted Successfully!',
+                        html: `
+                            <div class="text-center">
+                                <div class="fs-1 mb-3">🎉</div>
+                                <p>Your <strong>${data.badge.name}</strong> badge has been minted as an NFT!</p>
+                                <div class="small text-muted">
+                                    <strong>Transaction Hash:</strong><br>
+                                    <code>${data.mint_hash}</code>
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'Awesome!',
+                        confirmButtonColor: '#22c55e'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Minting Failed',
+                        text: data.message,
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Something went wrong during minting',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
+    });
+}
+</script>
+{% endblock %}
