@@ -407,13 +407,61 @@ def mint_nft():
     user_id = session.get('user_id', 'demo_user')
     badge_id = request.json.get('badge_id')
     wallet_address = request.json.get('wallet_address')
+    is_tier_id = request.json.get('is_tier_id', False)
     
-    if badge_id not in nft_badges_db:
-        return jsonify({'success': False, 'message': 'Badge not found'})
+    user_data = get_user_data(user_id)
     
-    badge_data = nft_badges_db[badge_id]
+    # If it's a tier ID, find or create the badge
+    if is_tier_id and badge_id in NFT_TIERS:
+        tier_info = NFT_TIERS[badge_id]
+        
+        # Check if user has earned this tier
+        if badge_id not in user_data['nft_badges']:
+            return jsonify({'success': False, 'message': 'Badge not earned yet'})
+        
+        # Find existing badge or create new one
+        existing_badge = None
+        for nft_id, badge_data in nft_badges_db.items():
+            if badge_data['tier'] == badge_id and badge_data.get('owner') == user_id:
+                existing_badge = badge_data
+                existing_badge['id'] = nft_id
+                break
+        
+        if not existing_badge:
+            # Create new badge
+            nft_id = str(uuid.uuid4())
+            badge_data = {
+                'id': nft_id,
+                'tier': badge_id,
+                'name': tier_info['name'],
+                'co2_saved': user_data['total_co2_saved'],
+                'earned_date': datetime.now().isoformat(),
+                'owner': user_id,
+                'metadata': {
+                    'description': f'NFT Badge for saving {tier_info["co2_required"]}+ kg CO2',
+                    'image_url': f'/static/badges/{badge_id}.png',
+                    'attributes': [
+                        {'trait_type': 'CO2 Saved', 'value': f'{user_data["total_co2_saved"]} kg'},
+                        {'trait_type': 'Tier', 'value': tier_info['name']},
+                        {'trait_type': 'Earned Date', 'value': datetime.now().strftime('%Y-%m-%d')}
+                    ]
+                }
+            }
+            nft_badges_db[nft_id] = badge_data
+        else:
+            badge_data = existing_badge
+    else:
+        # Handle regular badge ID
+        if badge_id not in nft_badges_db:
+            return jsonify({'success': False, 'message': 'Badge not found'})
+        
+        badge_data = nft_badges_db[badge_id]
     
-    # Prepare badge for minting (but don't mark as minted yet)
+    # Check if already minted
+    if badge_data.get('minted'):
+        return jsonify({'success': False, 'message': 'Badge already minted'})
+    
+    # Prepare badge for minting
     badge_data['prepared_for_minting'] = True
     badge_data['wallet_address'] = wallet_address
     badge_data['prepare_date'] = datetime.now().isoformat()

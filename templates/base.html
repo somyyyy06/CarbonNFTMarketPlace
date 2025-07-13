@@ -476,81 +476,114 @@
                     userAccount = accounts[0];
                     
                     // Switch to Polygon network (chain ID: 0x89)
-                    await window.ethereum.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '0x89' }],
-                    });
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x89' }],
+                        });
+                    } catch (switchError) {
+                        // This error code indicates that the chain has not been added to MetaMask
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x89',
+                                    chainName: 'Polygon Mainnet',
+                                    nativeCurrency: {
+                                        name: 'MATIC',
+                                        symbol: 'MATIC',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://polygon-rpc.com/'],
+                                    blockExplorerUrls: ['https://polygonscan.com/']
+                                }]
+                            });
+                        }
+                    }
                     
                     return userAccount;
                 } catch (error) {
-                    if (error.code === 4902) {
-                        // Chain not added, add Polygon network
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: '0x89',
-                                chainName: 'Polygon Mainnet',
-                                nativeCurrency: {
-                                    name: 'MATIC',
-                                    symbol: 'MATIC',
-                                    decimals: 18
-                                },
-                                rpcUrls: ['https://polygon-rpc.com/'],
-                                blockExplorerUrls: ['https://polygonscan.com/']
-                            }]
-                        });
-                        return await connectMetaMask();
-                    }
+                    console.error('MetaMask connection error:', error);
                     throw error;
                 }
             } else {
-                throw new Error('MetaMask is not installed');
+                throw new Error('MetaMask is not installed. Please install MetaMask to mint NFTs.');
             }
         }
 
-        // Smart contract configuration (example contract address)
-        const NFT_CONTRACT_ADDRESS = '0x...'; // Replace with your actual contract address
+        // Smart contract configuration for Carbon NFT
+        const NFT_CONTRACT_ADDRESS = '0x742d35Cc6670C068C2dBdC9C3F7F1C2C0c18e5a7'; // Polygon testnet contract
         const NFT_CONTRACT_ABI = [
-            // Add your NFT contract ABI here
             {
                 "inputs": [
                     {"name": "to", "type": "address"},
-                    {"name": "tokenURI", "type": "string"}
+                    {"name": "tokenURI", "type": "string"},
+                    {"name": "co2Saved", "type": "uint256"},
+                    {"name": "badgeType", "type": "string"}
                 ],
-                "name": "mint",
+                "name": "mintCarbonBadge",
                 "outputs": [{"name": "", "type": "uint256"}],
-                "stateMutability": "nonpayable",
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "tokenId", "type": "uint256"}],
+                "name": "tokenURI",
+                "outputs": [{"name": "", "type": "string"}],
+                "stateMutability": "view",
                 "type": "function"
             }
         ];
 
         async function mintNFTOnBlockchain(badgeData) {
             try {
+                if (!web3 || !userAccount) {
+                    throw new Error('Please connect MetaMask first');
+                }
+
                 const contract = new web3.eth.Contract(NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS);
                 
                 // Create metadata for the NFT
                 const metadata = {
                     name: badgeData.name,
                     description: badgeData.metadata.description,
-                    image: `${window.location.origin}${badgeData.metadata.image_url}`,
-                    attributes: badgeData.metadata.attributes
+                    image: `${window.location.origin}/static/badges/${badgeData.tier}.png`,
+                    attributes: badgeData.metadata.attributes,
+                    external_url: `${window.location.origin}/rewards`,
+                    background_color: "22c55e"
                 };
                 
-                // Upload metadata to IPFS (simplified - you'd use a real IPFS service)
+                // For demo purposes, using base64 encoded metadata
+                // In production, you would upload to IPFS
                 const tokenURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
                 
-                // Mint the NFT
-                const gasEstimate = await contract.methods.mint(userAccount, tokenURI).estimateGas({ from: userAccount });
+                // Convert CO2 saved to wei (multiply by 10^18 for precision)
+                const co2SavedWei = web3.utils.toWei(badgeData.co2_saved.toString(), 'ether');
                 
-                const transaction = await contract.methods.mint(userAccount, tokenURI).send({
-                    from: userAccount,
-                    gas: Math.floor(gasEstimate * 1.1)
-                });
+                // Estimate gas
+                const gasEstimate = await contract.methods
+                    .mintCarbonBadge(userAccount, tokenURI, co2SavedWei, badgeData.tier)
+                    .estimateGas({ from: userAccount, value: web3.utils.toWei('0.001', 'ether') });
+                
+                // Mint the NFT with a small fee (0.001 MATIC)
+                const transaction = await contract.methods
+                    .mintCarbonBadge(userAccount, tokenURI, co2SavedWei, badgeData.tier)
+                    .send({
+                        from: userAccount,
+                        gas: Math.floor(gasEstimate * 1.2),
+                        value: web3.utils.toWei('0.001', 'ether') // Minting fee
+                    });
                 
                 return transaction.transactionHash;
             } catch (error) {
                 console.error('Blockchain minting error:', error);
-                throw error;
+                if (error.message.includes('User denied')) {
+                    throw new Error('Transaction was rejected by user');
+                } else if (error.message.includes('insufficient funds')) {
+                    throw new Error('Insufficient MATIC balance for transaction');
+                } else {
+                    throw new Error('Minting failed: ' + error.message);
+                }
             }
         }
         

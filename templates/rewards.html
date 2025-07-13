@@ -219,6 +219,17 @@
 <script>
 async function mintNFT(badgeId) {
     try {
+        // Check if this is a tier ID or badge ID
+        let isEarnedBadge = false;
+        let targetBadgeId = badgeId;
+        
+        // If it's a tier ID (for earned badges), we need to find the actual badge
+        if (typeof badgeId === 'string' && ['green_starter', 'eco_warrior', 'planet_protector', 'climate_champion', 'earth_guardian'].includes(badgeId)) {
+            isEarnedBadge = true;
+            // For tier IDs, we'll send the tier ID and let backend handle it
+            targetBadgeId = badgeId;
+        }
+
         // First, connect MetaMask
         Swal.fire({
             title: 'Connect MetaMask',
@@ -254,7 +265,7 @@ async function mintNFT(badgeId) {
                             <div class="text-center">
                                 <p>Connected to: <code>${account.substring(0, 6)}...${account.substring(38)}</code></p>
                                 <p>Ready to mint your NFT badge on Polygon network?</p>
-                                <small class="text-muted">This will require a transaction fee (gas) paid in MATIC</small>
+                                <small class="text-muted">This will require a small transaction fee (~0.001 MATIC)</small>
                             </div>
                         `,
                         icon: 'question',
@@ -272,8 +283,9 @@ async function mintNFT(badgeId) {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({
-                                    badge_id: badgeId,
-                                    wallet_address: account
+                                    badge_id: targetBadgeId,
+                                    wallet_address: account,
+                                    is_tier_id: isEarnedBadge
                                 })
                             });
                             
@@ -286,6 +298,7 @@ async function mintNFT(badgeId) {
                                     html: `
                                         <div class="text-center">
                                             <p>Please confirm the transaction in MetaMask</p>
+                                            <p class="small text-muted">Minting fee: ~0.001 MATIC</p>
                                             <div class="spinner-border text-primary" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
@@ -307,7 +320,7 @@ async function mintNFT(badgeId) {
                                             'Content-Type': 'application/json',
                                         },
                                         body: JSON.stringify({
-                                            badge_id: badgeId,
+                                            badge_id: data.badge.id,
                                             transaction_hash: txHash,
                                             wallet_address: account
                                         })
@@ -322,11 +335,18 @@ async function mintNFT(badgeId) {
                                                 <p>Your <strong>${data.badge.name}</strong> badge has been minted as an NFT!</p>
                                                 <div class="small text-muted mb-3">
                                                     <strong>Transaction Hash:</strong><br>
-                                                    <code>${txHash}</code>
+                                                    <code style="word-break: break-all;">${txHash}</code>
                                                 </div>
-                                                <a href="https://polygonscan.com/tx/${txHash}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                    View on PolygonScan
-                                                </a>
+                                                <div class="d-flex gap-2 justify-content-center">
+                                                    <a href="https://polygonscan.com/tx/${txHash}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-external-link-alt me-1"></i>
+                                                        View on PolygonScan
+                                                    </a>
+                                                    <a href="/nft-marketplace" class="btn btn-outline-success btn-sm">
+                                                        <i class="fas fa-coins me-1"></i>
+                                                        View in Marketplace
+                                                    </a>
+                                                </div>
                                             </div>
                                         `,
                                         confirmButtonText: 'Awesome!',
@@ -347,7 +367,7 @@ async function mintNFT(badgeId) {
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Minting Failed',
-                                    text: data.message,
+                                    text: data.message || 'Badge not found or already minted',
                                     confirmButtonColor: '#dc3545'
                                 });
                             }
