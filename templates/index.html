@@ -2,231 +2,262 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid px-4 py-4">
-    <div class="row">
-        <!-- CO2 Savings Dashboard -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 eco-green text-white">
-                <div class="card-body">
-                    <h5 class="card-title d-flex align-items-center">
-                        <i class="fas fa-leaf me-2"></i>
-                        CO₂ Savings Dashboard
-                    </h5>
-                    
-                    <div class="text-center my-4">
-                        <div style="font-size: 4rem; font-weight: bold;">
-                            {{ "%.1f"|format(user_data.total_co2_saved) }}
+<!-- Hero Banner -->
+<div class="hero-banner">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="hero-content">
+                    <h1>Walmart</h1>
+                    <h2>DEALS</h2>
+                    <p class="lead">JULY 8-13 ONLY!</p>
+                    <h3 class="mb-4">Up to 30% off—<br>go, go, go!</h3>
+                    <button class="btn shop-deals-btn">
+                        Shop Deals
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end">
+                <div class="hero-image">
+                    <img src="/static/images/hero-products.png" alt="Products" class="img-fluid" style="max-height: 300px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-4">
+    <!-- Environmental Impact Banner -->
+    {% if user_data.total_co2_saved > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-success d-flex align-items-center" style="background: linear-gradient(135deg, #28a745, #20c997); border: none;">
+                <i class="fas fa-leaf me-3 fs-2"></i>
+                <div>
+                    <h5 class="mb-1 text-white">🌱 Your Environmental Impact</h5>
+                    <p class="mb-0 text-white">You've saved <strong>{{ "%.1f"|format(user_data.total_co2_saved) }} kg CO₂</strong> through eco-friendly purchases! 
+                    <a href="/rewards" class="text-white" style="text-decoration: underline;">Earn Your Rewards Through NFT →</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Featured Products Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title">Featured Products</h2>
+                <a href="/ecoproducts" class="btn eco-green text-white">
+                    <i class="fas fa-leaf me-2"></i>View EcoProducts Collection
+                </a>
+            </div>
+            
+            <div class="row">
+                {% for product in featured_products %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card product-card">
+                        {% if product.discount > 0 %}
+                        <div class="position-absolute top-0 start-0 m-2">
+                            <span class="discount-badge">{{ product.discount }}% OFF</span>
                         </div>
-                        <div class="fs-5">kg CO₂ Saved</div>
-                        <small class="opacity-75">Total carbon footprint reduction from your eco-friendly purchases</small>
-                    </div>
-                    
-                    <div class="row text-center mb-3">
-                        <div class="col">
-                            <div class="fs-6">Progress towards next reward milestone</div>
-                            <div class="progress mt-2" style="height: 10px;">
-                                <div class="progress-bar bg-warning" 
-                                     style="width: 85%"></div>
+                        {% endif %}
+                        
+                        <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image" 
+                             onerror="this.src='https://via.placeholder.com/200x200?text={{ product.name[:10] }}'">
+                        
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.name }}</h6>
+                            
+                            <div class="mb-2">
+                                {% if product.discount > 0 %}
+                                <span class="original-price">₹{{ "%.0f"|format(product.original_price) }}</span>
+                                {% endif %}
+                                <div class="price">₹{{ "%.0f"|format(product.price) }}</div>
                             </div>
-                            <small class="opacity-75">85%</small>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="text-warning me-2">
+                                        {% for i in range(5) %}
+                                            {% if i < product.rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">({{ product.reviews }})</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button class="btn add-to-cart-btn" onclick="addToCart({{ product.id }}, 'regular')">
+                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="purchaseProduct({{ product.id }}, 'regular')">
+                                    Buy Now
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="text-center">
-                        <small class="opacity-75">7.5 kg to reach Climate Champion level</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- EcoProducts Highlight Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="eco-green text-white p-4 rounded mb-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h3 class="mb-2">
+                            <i class="fas fa-leaf me-2"></i>EcoProducts
+                        </h3>
+                        <p class="mb-0">Discover our carefully curated selection of eco-friendly products that help reduce your carbon footprint while maintaining quality and style. Earn NFT rewards for every eco-friendly purchase!</p>
                     </div>
-                    
-                    <div class="mt-4">
-                        <a href="/rewards" class="btn walmart-yellow text-dark fw-bold w-100 py-3">
-                            <i class="fas fa-trophy me-2"></i>
-                            Earn Your Rewards Through NFT
+                    <div class="col-lg-4 text-end">
+                        <a href="/ecoproducts" class="btn walmart-yellow text-dark fw-bold btn-lg">
+                            <i class="fas fa-arrow-right me-2"></i>Shop EcoProducts
                         </a>
                     </div>
                 </div>
             </div>
+            
+            <div class="row">
+                {% for product in featured_eco_products %}
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card eco-product-card">
+                        <div class="eco-badge">ECO</div>
+                        
+                        <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image"
+                             onerror="this.src='https://via.placeholder.com/200x200?text=Eco+Product'">
+                        
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.name }}</h6>
+                            <div class="price mb-2">₹{{ "%.2f"|format(product.price) }}</div>
+                            
+                            <div class="eco-tags">
+                                {% for tag in product.tags[:2] %}
+                                <span class="eco-tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="co2-savings text-center">
+                                <div class="fw-bold">This Product:</div>
+                                <div class="fs-5">{{ "%.1f"|format(product.co2_saved) }} kg CO₂</div>
+                                <small>vs {{ "%.1f"|format(product.industry_avg) }} kg Industry Average</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-light text-dark">
+                                        ✓ You Save {{ "%.1f"|format(product.industry_avg - product.co2_saved) }} kg CO₂
+                                    </span>
+                                </div>
+                                <small class="d-block mt-1">{{ "%.1f"|format(((product.industry_avg - product.co2_saved) / product.industry_avg * 100)) }}% Better</small>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-3">
+                                <button class="btn eco-green text-white" onclick="addToCart({{ product.id }}, 'eco')">
+                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" onclick="purchaseProduct({{ product.id }}, 'eco')">
+                                    Buy Now & Earn NFT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        
-        <!-- Environmental Impact -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title d-flex align-items-center">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Environmental Impact
-                    </h5>
-                    
-                    <p class="text-muted mb-3">
-                        Your <strong>{{ "%.1f"|format(user_data.total_co2_saved) }} kg CO₂</strong> savings is equivalent to:
-                    </p>
-                    
-                    <div class="eco-stat-card p-3 mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3 text-success fs-4">
+    </div>
+
+    <!-- User Stats Dashboard (if user has made eco purchases) -->
+    {% if user_data.total_co2_saved > 0 %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="section-title">Your Impact Dashboard</h2>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="fs-1 text-success mb-2">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <h5>{{ "%.1f"|format(user_data.total_co2_saved) }} kg</h5>
+                            <p class="text-muted mb-0">Total CO₂ Saved</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="fs-1 text-primary mb-2">
                                 <i class="fas fa-tree"></i>
                             </div>
-                            <div>
-                                <div class="fw-bold">{{ (user_data.total_co2_saved * 0.04)|round|int }} trees planted</div>
-                                <small class="text-muted">Carbon absorption capacity</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="eco-stat-card p-3 mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3 text-primary fs-4">
-                                <i class="fas fa-car"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ (user_data.total_co2_saved * 4.4)|round|int }} miles not driven</div>
-                                <small class="text-muted">Gasoline vehicle emissions avoided</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="eco-stat-card p-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3 text-warning fs-4">
-                                <i class="fas fa-lightbulb"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ (user_data.total_co2_saved * 120)|round|int }} LED bulbs used for 1 hour</div>
-                                <small class="text-muted">Energy efficiency comparison</small>
-                            </div>
+                            <h5>{{ (user_data.total_co2_saved * 0.04)|round|int }}</h5>
+                            <p class="text-muted mb-0">Trees Equivalent</p>
                         </div>
                     </div>
                 </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="fs-1 text-warning mb-2">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <h5>{{ user_data.nft_badges|length }}</h5>
+                            <p class="text-muted mb-0">NFT Badges Earned</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="fs-1 text-info mb-2">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <h5>{{ user_data.eco_products_purchased }}</h5>
+                            <p class="text-muted mb-0">Eco Products Bought</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="/rewards" class="btn walmart-yellow text-dark fw-bold btn-lg">
+                    <i class="fas fa-trophy me-2"></i>View All Rewards & NFTs
+                </a>
             </div>
         </div>
     </div>
-    
-    <!-- Recent Eco-Friendly Purchases -->
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title d-flex align-items-center">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Recent Eco-Friendly Purchases
-                    </h5>
-                    
-                    <div id="recent-purchases">
-                        <div class="purchase-item p-3 mb-2 rounded">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-tshirt me-3 text-success"></i>
-                                    <div>
-                                        <div class="fw-bold">Organic Cotton T-Shirt</div>
-                                        <small class="text-muted">Today</small>
-                                    </div>
-                                </div>
-                                <div class="co2-badge">+2.3 kg CO₂</div>
-                            </div>
-                        </div>
-                        
-                        <div class="purchase-item p-3 mb-2 rounded">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-lightbulb me-3 text-success"></i>
-                                    <div>
-                                        <div class="fw-bold">LED Light Bulbs (4-pack)</div>
-                                        <small class="text-muted">Today</small>
-                                    </div>
-                                </div>
-                                <div class="co2-badge">+8.7 kg CO₂</div>
-                            </div>
-                        </div>
-                        
-                        <div class="purchase-item p-3 rounded">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-paper-plane me-3 text-success"></i>
-                                    <div>
-                                        <div class="fw-bold">Recycled Paper Towels</div>
-                                        <small class="text-muted">Today</small>
-                                    </div>
-                                </div>
-                                <div class="co2-badge">+1.2 kg CO₂</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Environmental Goals -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title d-flex align-items-center">
-                        <i class="fas fa-bullseye me-2"></i>
-                        Your Environmental Goals
-                    </h5>
-                    
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold">Monthly CO₂ Reduction</span>
-                            <span class="text-success fw-bold">{{ "%.1f"|format(user_data.monthly_co2_saved) }}/{{ user_data.monthly_goal }} kg</span>
-                        </div>
-                        <div class="progress mb-2" style="height: 12px;">
-                            <div class="progress-bar eco-green" 
-                                 style="width: {{ (user_data.monthly_co2_saved / user_data.monthly_goal * 100)|round }}%"></div>
-                        </div>
-                        <small class="text-muted">{{ "%.1f"|format(user_data.monthly_goal - user_data.monthly_co2_saved) }} kg remaining this month</small>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold">Eco Products Purchased</span>
-                            <span class="text-success fw-bold">{{ user_data.eco_products_purchased }}/{{ user_data.eco_products_goal }}</span>
-                        </div>
-                        <div class="progress mb-2" style="height: 12px;">
-                            <div class="progress-bar eco-green" 
-                                 style="width: {{ (user_data.eco_products_purchased / user_data.eco_products_goal * 100)|round }}%"></div>
-                        </div>
-                        <small class="text-muted">{{ user_data.eco_products_goal - user_data.eco_products_purchased }} products to reach monthly goal</small>
-                    </div>
-                    
-                    <button class="btn btn-outline-success w-100">
-                        <i class="fas fa-shopping-cart me-2"></i>
-                        Browse Eco Products
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Eco Products Section -->
+    {% endif %}
+
+    <!-- Call to Action -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card bg-light text-center py-5">
                 <div class="card-body">
-                    <h5 class="card-title d-flex align-items-center mb-4">
-                        <i class="fas fa-leaf me-2 text-success"></i>
-                        Featured Eco Products
-                    </h5>
-                    
-                    <div class="row" id="eco-products">
-                        {% for product in eco_products %}
-                        <div class="col-md-4 col-lg-3 mb-4">
-                            <div class="card h-100 product-card">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="card-title">{{ product.name }}</h6>
-                                        <span class="badge bg-success">${{ "%.2f"|format(product.price) }}</span>
-                                    </div>
-                                    <p class="text-muted small">{{ product.category|title }} • Eco-friendly choice</p>
-                                    <div class="co2-badge mb-3">
-                                        <i class="fas fa-leaf me-1"></i>
-                                        {{ "%.1f"|format(product.co2_saved) }} kg CO₂ saved
-                                    </div>
-                                    <button class="btn btn-success w-100" onclick="purchaseProduct({{ product.id }})">
-                                        <i class="fas fa-shopping-cart me-2"></i>
-                                        Add to Cart
-                                    </button>
-                                </div>
-                            </div>
+                    <h3 class="card-title">Start Your Eco Journey Today!</h3>
+                    <p class="card-text fs-5 mb-4">
+                        Make a difference with every purchase. Shop eco-friendly products and earn unique NFT badges that represent your environmental impact.
+                    </p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <a href="/ecoproducts" class="btn eco-green text-white btn-lg w-100 mb-3">
+                                <i class="fas fa-leaf me-2"></i>Shop EcoProducts
+                            </a>
                         </div>
-                        {% endfor %}
+                        <div class="col-md-6">
+                            <a href="/rewards" class="btn walmart-yellow text-dark btn-lg w-100">
+                                <i class="fas fa-coins me-2"></i>Learn About NFT Rewards
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -237,42 +268,16 @@
 
 {% block scripts %}
 <script>
-function purchaseProduct(productId) {
-    fetch('/purchase', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            product_id: productId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showSuccess(
-                'Purchase Successful!', 
-                `You saved ${data.co2_saved} kg CO₂ with this purchase!`
-            );
-            
-            // Show NFT reward if earned
-            if (data.new_badges && data.new_badges.length > 0) {
-                setTimeout(() => {
-                    showNFTReward(data.new_badges);
-                }, 1500);
-            }
-            
-            // Refresh page to update stats
-            setTimeout(() => {
-                location.reload();
-            }, 3000);
-        } else {
-            showError('Purchase Failed', data.message);
-        }
-    })
-    .catch(error => {
-        showError('Error', 'Something went wrong with your purchase');
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
     });
-}
+});
 </script>
 {% endblock %}

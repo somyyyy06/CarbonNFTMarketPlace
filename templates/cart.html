@@ -1,0 +1,210 @@
+
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart | Walmart{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Shopping Cart ({{ cart_count }} items)</h4>
+                </div>
+                <div class="card-body">
+                    {% if cart_items %}
+                        {% for item in cart_items %}
+                        <div class="row align-items-center border-bottom py-3">
+                            <div class="col-md-2">
+                                <img src="{{ item.product.image }}" alt="{{ item.product.name }}" 
+                                     class="img-fluid rounded" style="max-height: 80px;"
+                                     onerror="this.src='https://via.placeholder.com/80x80?text=Product'">
+                            </div>
+                            <div class="col-md-4">
+                                <h6>{{ item.product.name }}</h6>
+                                {% if item.type == 'eco' %}
+                                <span class="badge bg-success">Eco-Friendly</span>
+                                <div class="small text-success mt-1">
+                                    <i class="fas fa-leaf me-1"></i>
+                                    Saves {{ "%.1f"|format(item.product.co2_saved) }} kg CO₂
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <span class="fw-bold">₹{{ "%.2f"|format(item.product.price) }}</span>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="input-group" style="max-width: 120px;">
+                                    <button class="btn btn-outline-secondary btn-sm" type="button">-</button>
+                                    <input type="text" class="form-control text-center" value="{{ item.quantity }}" readonly>
+                                    <button class="btn btn-outline-secondary btn-sm" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <span class="fw-bold">₹{{ "%.2f"|format(item.total) }}</span>
+                                <br>
+                                <button class="btn btn-link btn-sm text-danger p-0">Remove</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="fs-1 text-muted mb-3">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <h5>Your cart is empty</h5>
+                            <p class="text-muted">Add some products to get started!</p>
+                            <a href="/" class="btn btn-primary">Continue Shopping</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>₹{{ "%.2f"|format(total_price) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping:</span>
+                        <span class="text-success">Free</span>
+                    </div>
+                    {% if total_co2_saved > 0 %}
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span><i class="fas fa-leaf me-1"></i>CO₂ Savings:</span>
+                        <span>{{ "%.1f"|format(total_co2_saved) }} kg</span>
+                    </div>
+                    {% endif %}
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5">
+                        <span>Total:</span>
+                        <span>₹{{ "%.2f"|format(total_price) }}</span>
+                    </div>
+                    
+                    {% if cart_items %}
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn walmart-blue text-white btn-lg" onclick="checkoutCart()">
+                            <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                        </button>
+                        {% if total_co2_saved > 0 %}
+                        <div class="alert alert-success small">
+                            <i class="fas fa-trophy me-1"></i>
+                            This purchase will earn you NFT rewards!
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if total_co2_saved > 0 %}
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-leaf me-2"></i>Environmental Impact</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">Your <strong>{{ "%.1f"|format(total_co2_saved) }} kg CO₂</strong> savings is equivalent to:</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-tree text-success me-2"></i>{{ (total_co2_saved * 0.04)|round|int }} trees planted</li>
+                        <li><i class="fas fa-car text-primary me-2"></i>{{ (total_co2_saved * 4.4)|round|int }} miles not driven</li>
+                        <li><i class="fas fa-lightbulb text-warning me-2"></i>{{ (total_co2_saved * 120)|round|int }} LED bulbs for 1 hour</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function checkoutCart() {
+    Swal.fire({
+        title: 'Confirm Purchase',
+        text: 'Proceed with checkout?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Purchase!',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#0071ce'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show processing
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Please wait while we process your order',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('/purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cart_checkout: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let message = 'Your order has been placed successfully!';
+                    if (data.co2_saved > 0) {
+                        message += ` You saved ${data.co2_saved} kg CO₂!`;
+                    }
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order Successful!',
+                        text: message,
+                        confirmButtonColor: '#22c55e'
+                    }).then(() => {
+                        // Show NFT reward if earned
+                        if (data.new_badges && data.new_badges.length > 0) {
+                            showNFTReward(data.new_badges);
+                        } else {
+                            window.location.href = '/';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Order Failed',
+                        text: data.message || 'Something went wrong',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Something went wrong with your order',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

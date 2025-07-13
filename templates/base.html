@@ -4,14 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EcoMart - Sustainable Shopping with NFT Rewards{% endblock %}</title>
+    <title>{% block title %}Walmart - Save Money. Live Better.{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .walmart-blue { background-color: #004c91; }
-        .walmart-yellow { background-color: #ffc220; }
-        .eco-green { background-color: #22c55e; }
-        .eco-orange { background-color: #f97316; }
+        :root {
+            --walmart-blue: #0071ce;
+            --walmart-yellow: #ffc220;
+            --walmart-dark-blue: #004c91;
+            --eco-green: #22c55e;
+            --eco-dark-green: #16a34a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .walmart-blue { background-color: var(--walmart-blue); }
+        .walmart-yellow { background-color: var(--walmart-yellow); }
+        .walmart-dark-blue { background-color: var(--walmart-dark-blue); }
+        .eco-green { background-color: var(--eco-green); }
+        .eco-dark-green { background-color: var(--eco-dark-green); }
         
         .navbar-brand {
             font-weight: bold;
@@ -23,9 +36,23 @@
             max-width: 600px;
             margin: 0 2rem;
         }
+
+        .search-input {
+            border-radius: 25px 0 0 25px;
+            border: 2px solid #e0e0e0;
+            padding: 10px 20px;
+        }
+
+        .search-btn {
+            border-radius: 0 25px 25px 0;
+            background-color: var(--walmart-yellow);
+            border: 2px solid var(--walmart-yellow);
+            color: #333;
+            font-weight: bold;
+        }
         
         .co2-badge {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
+            background: linear-gradient(135deg, var(--eco-green), var(--eco-dark-green));
             color: white;
             border-radius: 20px;
             padding: 8px 16px;
@@ -37,115 +64,293 @@
             font-size: 1.2rem;
             margin-bottom: 4px;
         }
-        
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-        
-        .nft-badge {
-            border-radius: 15px;
-            transition: transform 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .nft-badge:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        
-        .nft-badge.earned {
-            background: linear-gradient(135deg, var(--badge-color), var(--badge-color-dark));
+
+        .header-icon {
             color: white;
-        }
-        
-        .nft-badge.locked {
-            background: #6c757d;
-            color: #fff;
-            opacity: 0.7;
-        }
-        
-        .badge-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .mint-button {
-            background: linear-gradient(135deg, #ffc220, #ffb000);
-            border: none;
-            color: #004c91;
-            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            padding: 0 15px;
             transition: all 0.3s ease;
         }
-        
-        .mint-button:hover {
+
+        .header-icon:hover {
+            color: var(--walmart-yellow);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .nav-menu .nav-link {
+            color: #333;
+            font-weight: 500;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu .nav-link:hover {
+            color: var(--walmart-blue);
+            background-color: #e9ecef;
+        }
+
+        .eco-nav-link {
+            background: linear-gradient(135deg, var(--eco-green), var(--eco-dark-green));
+            color: white !important;
+            border-radius: 20px;
+            margin: 0 10px;
+        }
+
+        .eco-nav-link:hover {
+            color: white !important;
+            background: linear-gradient(135deg, var(--eco-dark-green), var(--eco-green));
+            transform: translateY(-2px);
+        }
+
+        .hero-banner {
+            background: linear-gradient(135deg, var(--walmart-blue), var(--walmart-dark-blue));
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 30px;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .hero-content h2 {
+            color: var(--walmart-yellow);
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .shop-deals-btn {
+            background-color: var(--walmart-yellow);
+            color: #333;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .shop-deals-btn:hover {
+            background-color: #ffb000;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(255, 194, 32, 0.4);
-            color: #004c91;
         }
-        
-        .eco-stat-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-left: 4px solid #22c55e;
+
+        .product-card {
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
+            transition: all 0.3s ease;
+            height: 100%;
         }
-        
-        .purchase-item {
-            border-left: 3px solid #22c55e;
-            background: #f8fffe;
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .price {
+            color: var(--walmart-blue);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .discount-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .add-to-cart-btn {
+            background-color: var(--walmart-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .add-to-cart-btn:hover {
+            background-color: var(--walmart-dark-blue);
+            transform: translateY(-2px);
+        }
+
+        .eco-product-card {
+            border: 2px solid var(--eco-green);
+            position: relative;
+        }
+
+        .eco-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--eco-green);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .eco-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .eco-tag {
+            background-color: var(--eco-green);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .co2-savings {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .section-title {
+            border-bottom: 3px solid var(--walmart-yellow);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .footer {
+            background-color: var(--walmart-dark-blue);
+            color: white;
+            padding: 40px 0;
+            margin-top: 50px;
+        }
+
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb-item a {
+            color: var(--walmart-blue);
+            text-decoration: none;
+        }
+
+        .pagination .page-link {
+            color: var(--walmart-blue);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--walmart-blue);
+            border-color: var(--walmart-blue);
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Main Header -->
     <nav class="navbar navbar-expand-lg walmart-blue">
         <div class="container-fluid px-4">
             <a class="navbar-brand text-white d-flex align-items-center" href="/">
                 <i class="fas fa-star me-2"></i>
-                EcoMart
+                Walmart
             </a>
             
             <div class="search-container">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search everything at EcoMart online and in store">
-                    <button class="btn walmart-yellow" type="button">
+                    <input type="text" class="form-control search-input" placeholder="Search everything at Walmart online and in store">
+                    <button class="btn search-btn" type="button">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
             </div>
             
-            <div class="d-flex align-items-center text-white">
-                <div class="me-4 text-center">
+            <div class="d-flex align-items-center">
+                <a href="#" class="header-icon">
                     <div class="nav-icon"><i class="fas fa-heart"></i></div>
                     <small>Wishlist</small>
-                </div>
-                <div class="me-4 text-center">
+                </a>
+                <a href="#" class="header-icon">
                     <div class="nav-icon"><i class="fas fa-user"></i></div>
                     <small>Account</small>
-                </div>
-                <div class="text-center">
+                </a>
+                <a href="/cart" class="header-icon position-relative">
                     <div class="nav-icon"><i class="fas fa-shopping-cart"></i></div>
-                    <small>$0.00</small>
-                </div>
+                    <small>₹0.00</small>
+                    {% if cart_count > 0 %}
+                    <span class="cart-badge">{{ cart_count }}</span>
+                    {% endif %}
+                </a>
             </div>
         </div>
     </nav>
     
     <!-- Sub Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <nav class="navbar navbar-expand-lg nav-menu">
         <div class="container-fluid px-4">
-            <div class="d-flex w-100">
+            <div class="d-flex w-100 align-items-center">
                 <div class="d-flex align-items-center">
-                    <a href="/" class="nav-link me-4"><i class="fas fa-bars me-2"></i>Departments</a>
-                    <a href="/" class="nav-link me-4"><i class="fas fa-tools me-2"></i>Services</a>
-                    <a href="/" class="nav-link me-4">Get it Fast</a>
-                    <a href="/" class="nav-link me-4">New Arrivals</a>
-                    <a href="/" class="nav-link me-4">Deals</a>
-                    <a href="/" class="nav-link me-4">Trending</a>
-                    <a href="/" class="nav-link me-4 eco-green text-white px-3 py-2 rounded">
+                    <a href="#" class="nav-link"><i class="fas fa-bars me-2"></i>Departments</a>
+                    <a href="#" class="nav-link"><i class="fas fa-tools me-2"></i>Services</a>
+                    <a href="#" class="nav-link">Get it Fast</a>
+                    <a href="#" class="nav-link">New Arrivals</a>
+                    <a href="#" class="nav-link">Deals</a>
+                    <a href="#" class="nav-link">Trending</a>
+                    <a href="/ecoproducts" class="nav-link eco-nav-link">
                         <i class="fas fa-leaf me-2"></i>EcoProducts
                     </a>
-                    <a href="/rewards" class="nav-link">Rewards</a>
+                    <a href="/rewards" class="nav-link">
+                        <i class="fas fa-medal me-2"></i>Rewards
+                    </a>
+                    <a href="/nft-marketplace" class="nav-link">
+                        <i class="fas fa-coins me-2"></i>NFT Marketplace
+                    </a>
                 </div>
             </div>
         </div>
@@ -155,6 +360,56 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <h5>Help</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50">Help Center</a></li>
+                        <li><a href="#" class="text-white-50">Returns</a></li>
+                        <li><a href="#" class="text-white-50">Product Care</a></li>
+                        <li><a href="#" class="text-white-50">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Shop</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50">Weekly Ad</a></li>
+                        <li><a href="#" class="text-white-50">Clearance</a></li>
+                        <li><a href="#" class="text-white-50">Special Buys</a></li>
+                        <li><a href="/ecoproducts" class="text-white-50">EcoProducts</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Account</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50">Sign In</a></li>
+                        <li><a href="#" class="text-white-50">Create Account</a></li>
+                        <li><a href="#" class="text-white-50">Purchase History</a></li>
+                        <li><a href="/rewards" class="text-white-50">NFT Rewards</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Company</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50">About Us</a></li>
+                        <li><a href="#" class="text-white-50">Careers</a></li>
+                        <li><a href="#" class="text-white-50">Sustainability</a></li>
+                        <li><a href="#" class="text-white-50">Press Room</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="text-white-50">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="text-white-50 mb-0">&copy; 2024 Walmart Inc. All rights reserved. | EcoMart NFT Rewards Platform</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -206,6 +461,80 @@
                     }
                 });
             }
+        }
+
+        function addToCart(productId, type = 'regular') {
+            fetch('/add_to_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    type: type,
+                    quantity: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('Added to Cart!', 'Product has been added to your cart.');
+                    // Update cart count
+                    const cartBadges = document.querySelectorAll('.cart-badge');
+                    cartBadges.forEach(badge => {
+                        badge.textContent = data.cart_count;
+                        badge.style.display = data.cart_count > 0 ? 'block' : 'none';
+                    });
+                } else {
+                    showError('Error', 'Failed to add product to cart');
+                }
+            })
+            .catch(error => {
+                showError('Error', 'Something went wrong');
+            });
+        }
+
+        function purchaseProduct(productId, type = 'eco') {
+            fetch('/purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (type === 'eco') {
+                        showSuccess(
+                            'Purchase Successful!', 
+                            `You saved ${data.co2_saved} kg CO₂ with this purchase!`
+                        );
+                        
+                        // Show NFT reward if earned
+                        if (data.new_badges && data.new_badges.length > 0) {
+                            setTimeout(() => {
+                                showNFTReward(data.new_badges);
+                            }, 1500);
+                        }
+                    } else {
+                        showSuccess('Purchase Successful!', 'Thank you for your purchase!');
+                    }
+                    
+                    // Refresh page to update stats
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    showError('Purchase Failed', data.message);
+                }
+            })
+            .catch(error => {
+                showError('Error', 'Something went wrong with your purchase');
+            });
         }
     </script>
     

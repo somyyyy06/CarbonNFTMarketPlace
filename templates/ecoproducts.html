@@ -1,0 +1,274 @@
+
+{% extends "base.html" %}
+
+{% block title %}EcoProducts - Sustainable Shopping | Walmart{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">EcoProducts</li>
+        </ol>
+    </nav>
+
+    <!-- EcoProducts Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="eco-green text-white p-4 rounded">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="mb-3">
+                            <i class="fas fa-leaf me-3"></i>EcoProducts
+                        </h1>
+                        <p class="fs-5 mb-0">
+                            Discover our carefully curated selection of eco-friendly products that help reduce your carbon footprint while maintaining quality and style. Every purchase earns you NFT rewards!
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-end">
+                        <div class="bg-white text-dark p-3 rounded">
+                            <h5 class="mb-2">Your Impact</h5>
+                            <div class="fs-4 fw-bold text-success">{{ "%.1f"|format(user_data.total_co2_saved) }} kg CO₂</div>
+                            <small>Total Saved</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Sort Options -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fw-bold">Filter by:</span>
+                <select class="form-select" style="width: auto;" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="home">Home & Garden</option>
+                    <option value="personal_care">Personal Care</option>
+                    <option value="lifestyle">Lifestyle</option>
+                </select>
+                <select class="form-select" style="width: auto;" id="sortFilter">
+                    <option value="">Sort by</option>
+                    <option value="co2_desc">Highest CO₂ Savings</option>
+                    <option value="co2_asc">Lowest CO₂ Savings</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="text-muted">Showing {{ eco_products|length }} of {{ 50 }} products</span>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row" id="productsGrid">
+        {% for product in eco_products %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4 product-item" 
+             data-category="{{ product.category }}" 
+             data-co2="{{ product.co2_saved }}" 
+             data-price="{{ product.price }}">
+            <div class="card eco-product-card h-100">
+                <div class="eco-badge">ECO</div>
+                
+                <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image"
+                     onerror="this.src='https://via.placeholder.com/200x200?text=Eco+Product'">
+                
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title">{{ product.name }}</h6>
+                    <div class="price mb-2">₹{{ "%.2f"|format(product.price) }}</div>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                {% for i in range(5) %}
+                                    {% if i < product.rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">({{ product.reviews }})</small>
+                        </div>
+                    </div>
+                    
+                    <div class="eco-tags mb-3">
+                        {% for tag in product.tags %}
+                        <span class="eco-tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="co2-savings mb-3">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="fw-bold">This Product:</div>
+                                <div class="fs-6 fw-bold">{{ "%.1f"|format(product.co2_saved) }} kg CO₂</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="fw-bold">Industry Average:</div>
+                                <div class="fs-6">{{ "%.1f"|format(product.industry_avg) }} kg CO₂</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="badge bg-light text-dark">
+                                ✓ You Save {{ "%.1f"|format(product.industry_avg - product.co2_saved) }} kg CO₂
+                            </span>
+                            <div class="small mt-1">{{ "%.1f"|format(((product.industry_avg - product.co2_saved) / product.industry_avg * 100)) }}% Better</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <button class="btn eco-green text-white" onclick="addToCart({{ product.id }}, 'eco')">
+                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="purchaseProduct({{ product.id }}, 'eco')">
+                                Buy Now & Earn NFT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if has_prev or has_next %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Products pagination">
+                <ul class="pagination justify-content-center">
+                    {% if has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, 4) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Environmental Impact Info -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h4 class="card-title text-center mb-4">Why Choose EcoProducts?</h4>
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="fs-1 text-success mb-3">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <h5>Reduce Carbon Footprint</h5>
+                            <p class="text-muted">Every EcoProduct is designed to have a lower environmental impact than conventional alternatives.</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="fs-1 text-primary mb-3">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h5>Earn NFT Rewards</h5>
+                            <p class="text-muted">Get unique, blockchain-verified NFT badges that showcase your environmental contributions.</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="fs-1 text-warning mb-3">
+                                <i class="fas fa-certificate"></i>
+                            </div>
+                            <h5>Verified Impact</h5>
+                            <p class="text-muted">All CO₂ savings are calculated based on verified industry data and lifecycle assessments.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="text-center">
+                <h3>Ready to Make a Difference?</h3>
+                <p class="lead">Start your eco-friendly shopping journey and earn NFT rewards for your environmental impact!</p>
+                <a href="/rewards" class="btn walmart-yellow text-dark fw-bold btn-lg">
+                    <i class="fas fa-trophy me-2"></i>View Your Rewards
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const productItems = document.querySelectorAll('.product-item');
+
+    function filterAndSort() {
+        const selectedCategory = categoryFilter.value;
+        const selectedSort = sortFilter.value;
+        
+        // Convert NodeList to Array for sorting
+        let productsArray = Array.from(productItems);
+        
+        // Filter products
+        productsArray.forEach(item => {
+            const category = item.dataset.category;
+            if (selectedCategory === '' || category === selectedCategory) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Sort products
+        if (selectedSort) {
+            const visibleProducts = productsArray.filter(item => item.style.display !== 'none');
+            const grid = document.getElementById('productsGrid');
+            
+            visibleProducts.sort((a, b) => {
+                switch(selectedSort) {
+                    case 'co2_desc':
+                        return parseFloat(b.dataset.co2) - parseFloat(a.dataset.co2);
+                    case 'co2_asc':
+                        return parseFloat(a.dataset.co2) - parseFloat(b.dataset.co2);
+                    case 'price_asc':
+                        return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                    case 'price_desc':
+                        return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Reorder DOM elements
+            visibleProducts.forEach(item => {
+                grid.appendChild(item);
+            });
+        }
+    }
+
+    categoryFilter.addEventListener('change', filterAndSort);
+    sortFilter.addEventListener('change', filterAndSort);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,260 @@
+
+{% extends "base.html" %}
+
+{% block title %}Carbon NFT Marketplace | Walmart{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">NFT Marketplace</li>
+        </ol>
+    </nav>
+
+    <!-- Marketplace Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5" style="background: linear-gradient(135deg, #6f42c1, #6c757d);">
+                    <h1 class="text-white mb-3">
+                        <i class="fas fa-coins me-3"></i>Carbon NFT Marketplace
+                    </h1>
+                    <p class="text-white lead mb-4">
+                        Trade, collect, and showcase your environmental impact through blockchain-verified NFT badges
+                    </p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-3">
+                            <div class="bg-white p-3 rounded text-dark">
+                                <h5 class="mb-1">{{ marketplace_nfts|length }}</h5>
+                                <small>NFTs Available</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-white p-3 rounded text-dark">
+                                <h5 class="mb-1">{{ user_data.nft_badges|length }}</h5>
+                                <small>Your NFTs</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-white p-3 rounded text-dark">
+                                <h5 class="mb-1">{{ "%.1f"|format(user_data.total_co2_saved) }} kg</h5>
+                                <small>Your CO₂ Impact</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex gap-3 align-items-center">
+                <span class="fw-bold">Filter:</span>
+                <select class="form-select" style="width: auto;">
+                    <option>All Tiers</option>
+                    <option>Green Starter</option>
+                    <option>Eco Warrior</option>
+                    <option>Planet Protector</option>
+                    <option>Climate Champion</option>
+                    <option>Earth Guardian</option>
+                </select>
+                <select class="form-select" style="width: auto;">
+                    <option>Sort by Date</option>
+                    <option>Sort by CO₂ Impact</option>
+                    <option>Sort by Rarity</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search NFTs...">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NFT Grid -->
+    <div class="row">
+        {% if marketplace_nfts %}
+            {% for nft in marketplace_nfts %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100" style="border: 2px solid #6f42c1; border-radius: 15px;">
+                    <div class="card-body text-center">
+                        <div class="position-relative mb-3">
+                            <div style="width: 120px; height: 120px; margin: 0 auto; background: linear-gradient(135deg, #6f42c1, #20c997); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <div class="text-white">
+                                    {% if nft.tier == 'green_starter' %}
+                                        <i class="fas fa-seedling fa-3x"></i>
+                                    {% elif nft.tier == 'eco_warrior' %}
+                                        <i class="fas fa-shield-alt fa-3x"></i>
+                                    {% elif nft.tier == 'planet_protector' %}
+                                        <i class="fas fa-globe fa-3x"></i>
+                                    {% elif nft.tier == 'climate_champion' %}
+                                        <i class="fas fa-crown fa-3x"></i>
+                                    {% elif nft.tier == 'earth_guardian' %}
+                                        <i class="fas fa-leaf fa-3x"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="position-absolute top-0 end-0">
+                                <span class="badge bg-success">Verified</span>
+                            </div>
+                        </div>
+                        
+                        <h6 class="card-title">{{ nft.name }}</h6>
+                        <p class="text-muted small">{{ nft.metadata.description }}</p>
+                        
+                        <div class="mb-3">
+                            <div class="fw-bold text-success">{{ "%.1f"|format(nft.co2_saved) }} kg CO₂</div>
+                            <small class="text-muted">Carbon Impact</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Earned: {{ nft.earned_date[:10] }}</small>
+                            {% if nft.mint_date %}
+                            <small class="text-muted d-block">Minted: {{ nft.mint_date[:10] }}</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-primary">{{ nft.tier.replace('_', ' ').title() }}</span>
+                        </div>
+                        
+                        {% if nft.mint_hash %}
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Hash:</small>
+                            <code class="small">{{ nft.mint_hash[:16] }}...</code>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="viewNFTDetails('{{ nft.id }}')">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                            {% if nft.get('owner') != 'demo_user' %}
+                            <button class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-exchange-alt me-1"></i>Trade
+                            </button>
+                            {% else %}
+                            <span class="badge bg-success">You Own This</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <div class="fs-1 text-muted mb-3">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h5>No NFTs Available</h5>
+                    <p class="text-muted">Start purchasing eco-friendly products to earn your first NFT badges!</p>
+                    <a href="/ecoproducts" class="btn eco-green text-white">
+                        <i class="fas fa-leaf me-2"></i>Shop EcoProducts
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h4 class="text-center mb-4">How Carbon NFTs Work</h4>
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="fs-1 text-success mb-3">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <h6>1. Shop Eco-Friendly</h6>
+                            <p class="small text-muted">Purchase sustainable products from our EcoProducts collection</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="fs-1 text-primary mb-3">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <h6>2. Save CO₂</h6>
+                            <p class="small text-muted">Each product saves verified amounts of carbon emissions</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="fs-1 text-warning mb-3">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <h6>3. Earn Badges</h6>
+                            <p class="small text-muted">Reach CO₂ milestones to unlock unique NFT badges</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="fs-1 text-info mb-3">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h6>4. Trade & Showcase</h6>
+                            <p class="small text-muted">Mint, trade, and display your environmental impact</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="text-center">
+                <h3>Start Your NFT Collection Today!</h3>
+                <p class="lead">Make a real environmental impact and earn blockchain-verified rewards</p>
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <a href="/ecoproducts" class="btn eco-green text-white btn-lg w-100 mb-3">
+                            <i class="fas fa-leaf me-2"></i>Shop EcoProducts
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="/rewards" class="btn walmart-yellow text-dark btn-lg w-100">
+                            <i class="fas fa-trophy me-2"></i>View Your Rewards
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function viewNFTDetails(nftId) {
+    // This would typically fetch detailed NFT information
+    Swal.fire({
+        title: 'NFT Details',
+        html: `
+            <div class="text-start">
+                <h6>Carbon Impact NFT</h6>
+                <p><strong>ID:</strong> ${nftId}</p>
+                <p><strong>Blockchain:</strong> Ethereum (Polygon)</p>
+                <p><strong>Smart Contract:</strong> 0x...</p>
+                <p><strong>Standard:</strong> ERC-721</p>
+                <hr>
+                <h6>Environmental Impact</h6>
+                <p>This NFT represents verified carbon savings through eco-friendly purchases.</p>
+                <p><strong>Verification:</strong> Third-party audited</p>
+                <p><strong>Methodology:</strong> Lifecycle Assessment (LCA)</p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'View on Blockchain',
+        cancelButtonText: 'Close',
+        confirmButtonColor: '#6f42c1'
+    });
+}
+</script>
+{% endblock %}
