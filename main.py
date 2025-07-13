@@ -556,6 +556,44 @@ def remove_from_wishlist():
     
     return jsonify({'success': True, 'wishlist_count': len(wishlist)})
 
+@app.route('/orders')
+def orders():
+    user_id = session.get('user_id', 'demo_user')
+    user_data = get_user_data(user_id)
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    
+    # Get user's purchase history
+    user_orders = [purchase for purchase in purchases_db if purchase['user_id'] == user_id]
+    
+    return render_template('orders.html',
+                         user_data=user_data,
+                         orders=user_orders,
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
+
+@app.route('/returns')
+def returns():
+    user_id = session.get('user_id', 'demo_user')
+    user_data = get_user_data(user_id)
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    
+    # Get user's orders that can be returned (within 30 days)
+    returnable_orders = []
+    for purchase in purchases_db:
+        if purchase['user_id'] == user_id:
+            purchase_date = datetime.fromisoformat(purchase['timestamp'])
+            days_since_purchase = (datetime.now() - purchase_date).days
+            if days_since_purchase <= 30:
+                returnable_orders.append(purchase)
+    
+    return render_template('returns.html',
+                         user_data=user_data,
+                         returnable_orders=returnable_orders,
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
+
 @app.route('/api/user_stats')
 def user_stats():
     user_id = session.get('user_id', 'demo_user')
