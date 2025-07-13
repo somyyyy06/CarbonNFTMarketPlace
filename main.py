@@ -406,23 +406,47 @@ def purchase():
 def mint_nft():
     user_id = session.get('user_id', 'demo_user')
     badge_id = request.json.get('badge_id')
+    wallet_address = request.json.get('wallet_address')
     
     if badge_id not in nft_badges_db:
         return jsonify({'success': False, 'message': 'Badge not found'})
     
     badge_data = nft_badges_db[badge_id]
     
-    # Simulate NFT minting process
-    mint_hash = hashlib.sha256(f"{badge_id}{user_id}{datetime.now().isoformat()}".encode()).hexdigest()
-    
-    badge_data['minted'] = True
-    badge_data['mint_hash'] = mint_hash
-    badge_data['mint_date'] = datetime.now().isoformat()
-    badge_data['owner'] = user_id
+    # Prepare badge for minting (but don't mark as minted yet)
+    badge_data['prepared_for_minting'] = True
+    badge_data['wallet_address'] = wallet_address
+    badge_data['prepare_date'] = datetime.now().isoformat()
     
     return jsonify({
         'success': True,
-        'mint_hash': mint_hash,
+        'badge': badge_data
+    })
+
+@app.route('/update_nft_transaction', methods=['POST'])
+def update_nft_transaction():
+    user_id = session.get('user_id', 'demo_user')
+    badge_id = request.json.get('badge_id')
+    transaction_hash = request.json.get('transaction_hash')
+    wallet_address = request.json.get('wallet_address')
+    
+    if badge_id not in nft_badges_db:
+        return jsonify({'success': False, 'message': 'Badge not found'})
+    
+    badge_data = nft_badges_db[badge_id]
+    
+    # Update with real blockchain transaction data
+    badge_data['minted'] = True
+    badge_data['mint_hash'] = transaction_hash
+    badge_data['mint_date'] = datetime.now().isoformat()
+    badge_data['owner'] = user_id
+    badge_data['wallet_address'] = wallet_address
+    badge_data['blockchain'] = 'Polygon'
+    badge_data['network'] = 'mainnet'
+    
+    return jsonify({
+        'success': True,
+        'transaction_hash': transaction_hash,
         'badge': badge_data
     })
 

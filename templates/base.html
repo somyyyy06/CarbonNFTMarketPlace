@@ -438,6 +438,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     
     <script>
         // Global functions for the app
@@ -457,6 +458,100 @@
                 text: text,
                 confirmButtonColor: '#dc3545'
             });
+        }
+
+        // Web3 and MetaMask integration
+        let web3;
+        let userAccount;
+
+        async function connectMetaMask() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    web3 = new Web3(window.ethereum);
+                    
+                    // Get the user's accounts
+                    const accounts = await web3.eth.getAccounts();
+                    userAccount = accounts[0];
+                    
+                    // Switch to Polygon network (chain ID: 0x89)
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x89' }],
+                    });
+                    
+                    return userAccount;
+                } catch (error) {
+                    if (error.code === 4902) {
+                        // Chain not added, add Polygon network
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0x89',
+                                chainName: 'Polygon Mainnet',
+                                nativeCurrency: {
+                                    name: 'MATIC',
+                                    symbol: 'MATIC',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://polygon-rpc.com/'],
+                                blockExplorerUrls: ['https://polygonscan.com/']
+                            }]
+                        });
+                        return await connectMetaMask();
+                    }
+                    throw error;
+                }
+            } else {
+                throw new Error('MetaMask is not installed');
+            }
+        }
+
+        // Smart contract configuration (example contract address)
+        const NFT_CONTRACT_ADDRESS = '0x...'; // Replace with your actual contract address
+        const NFT_CONTRACT_ABI = [
+            // Add your NFT contract ABI here
+            {
+                "inputs": [
+                    {"name": "to", "type": "address"},
+                    {"name": "tokenURI", "type": "string"}
+                ],
+                "name": "mint",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        async function mintNFTOnBlockchain(badgeData) {
+            try {
+                const contract = new web3.eth.Contract(NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS);
+                
+                // Create metadata for the NFT
+                const metadata = {
+                    name: badgeData.name,
+                    description: badgeData.metadata.description,
+                    image: `${window.location.origin}${badgeData.metadata.image_url}`,
+                    attributes: badgeData.metadata.attributes
+                };
+                
+                // Upload metadata to IPFS (simplified - you'd use a real IPFS service)
+                const tokenURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
+                
+                // Mint the NFT
+                const gasEstimate = await contract.methods.mint(userAccount, tokenURI).estimateGas({ from: userAccount });
+                
+                const transaction = await contract.methods.mint(userAccount, tokenURI).send({
+                    from: userAccount,
+                    gas: Math.floor(gasEstimate * 1.1)
+                });
+                
+                return transaction.transactionHash;
+            } catch (error) {
+                console.error('Blockchain minting error:', error);
+                throw error;
+            }
         }
         
         function showNFTReward(badges) {
