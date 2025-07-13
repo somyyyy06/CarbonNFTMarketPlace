@@ -1,0 +1,100 @@
+
+{% extends "base.html" %}
+
+{% block title %}My Wishlist - Walmart{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active">Wishlist</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title">My Wishlist</h2>
+        <span class="text-muted">{{ wishlist_items|length }} items</span>
+    </div>
+    
+    {% if wishlist_items %}
+    <div class="row">
+        {% for item in wishlist_items %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card {% if item.type == 'eco' %}eco-product-card{% else %}product-card{% endif %} h-100">
+                {% if item.type == 'eco' %}
+                <div class="eco-badge">ECO</div>
+                {% endif %}
+                
+                <img src="{{ item.product.image }}" alt="{{ item.product.name }}" class="product-image"
+                     onerror="this.src='https://via.placeholder.com/200x200?text={{ item.product.name[:10] }}'">
+                
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title">{{ item.product.name }}</h6>
+                    
+                    <div class="price mb-2">
+                        {% if item.type == 'eco' %}
+                            ₹{{ "%.2f"|format(item.product.price) }}
+                        {% else %}
+                            ₹{{ "%.0f"|format(item.product.price) }}
+                        {% endif %}
+                    </div>
+                    
+                    {% if item.type == 'eco' %}
+                    <div class="eco-tags mb-2">
+                        {% for tag in item.product.tags[:2] %}
+                        <span class="eco-tag">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="co2-savings text-center mb-3">
+                        <div class="fw-bold">CO₂ Savings:</div>
+                        <div class="fs-6">{{ "%.1f"|format(item.product.co2_saved) }} kg</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <button class="btn {% if item.type == 'eco' %}eco-green text-white{% else %}add-to-cart-btn{% endif %}" 
+                                    onclick="addToCart({{ item.product.id }}, '{{ item.type }}')">
+                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-{% if item.type == 'eco' %}success{% else %}primary{% endif %} btn-sm flex-grow-1" 
+                                        onclick="purchaseProduct({{ item.product.id }}, '{{ item.type }}')">
+                                    Buy Now{% if item.type == 'eco' %} & Earn NFT{% endif %}
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" 
+                                        onclick="removeFromWishlist({{ item.product.id }}, '{{ item.type }}')" 
+                                        title="Remove from Wishlist">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-heart fs-1 text-muted"></i>
+        <h4 class="mt-3">Your wishlist is empty</h4>
+        <p class="text-muted mb-4">Save items you love to your wishlist for easy access later!</p>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <a href="/" class="btn walmart-blue text-white btn-lg w-100 mb-3">
+                    <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="/ecoproducts" class="btn eco-green text-white btn-lg w-100">
+                    <i class="fas fa-leaf me-2"></i>Shop EcoProducts
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

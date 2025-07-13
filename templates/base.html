@@ -312,14 +312,30 @@
             </div>
             
             <div class="d-flex align-items-center">
-                <a href="#" class="header-icon">
+                <a href="/wishlist" class="header-icon position-relative">
                     <div class="nav-icon"><i class="fas fa-heart"></i></div>
                     <small>Wishlist</small>
+                    {% if wishlist_count > 0 %}
+                    <span class="cart-badge">{{ wishlist_count }}</span>
+                    {% endif %}
                 </a>
-                <a href="#" class="header-icon">
-                    <div class="nav-icon"><i class="fas fa-user"></i></div>
-                    <small>Account</small>
-                </a>
+                <div class="dropdown">
+                    <a href="#" class="header-icon dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="nav-icon"><i class="fas fa-user"></i></div>
+                        <small>{% if session.logged_in %}{{ session.user_name }}{% else %}Account{% endif %}</small>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% if session.logged_in %}
+                            <li><a class="dropdown-item" href="/account"><i class="fas fa-user me-2"></i>My Account</a></li>
+                            <li><a class="dropdown-item" href="/rewards"><i class="fas fa-medal me-2"></i>My Rewards</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sign Out</a></li>
+                        {% else %}
+                            <li><a class="dropdown-item" href="/login"><i class="fas fa-sign-in-alt me-2"></i>Sign In</a></li>
+                            <li><a class="dropdown-item" href="/signup"><i class="fas fa-user-plus me-2"></i>Create Account</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
                 <a href="/cart" class="header-icon position-relative">
                     <div class="nav-icon"><i class="fas fa-shopping-cart"></i></div>
                     <small>₹0.00</small>
@@ -534,6 +550,59 @@
             })
             .catch(error => {
                 showError('Error', 'Something went wrong with your purchase');
+            });
+        }
+
+        function addToWishlist(productId, type = 'regular') {
+            fetch('/add_to_wishlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('Added to Wishlist!', data.message);
+                    // Update wishlist count if element exists
+                    const wishlistBadges = document.querySelectorAll('.cart-badge');
+                    if (wishlistBadges.length > 1) {
+                        wishlistBadges[0].textContent = data.wishlist_count;
+                        wishlistBadges[0].style.display = data.wishlist_count > 0 ? 'block' : 'none';
+                    }
+                } else {
+                    showError('Already in Wishlist', data.message);
+                }
+            })
+            .catch(error => {
+                showError('Error', 'Failed to add to wishlist');
+            });
+        }
+
+        function removeFromWishlist(productId, type = 'regular') {
+            fetch('/remove_from_wishlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('Removed from Wishlist!', 'Item removed from your wishlist');
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                showError('Error', 'Failed to remove from wishlist');
             });
         }
     </script>

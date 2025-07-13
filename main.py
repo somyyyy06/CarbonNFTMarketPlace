@@ -14,6 +14,15 @@ users_db = {}
 purchases_db = []
 nft_badges_db = {}
 cart_db = {}
+wishlist_db = {}
+accounts_db = {
+    'demo@walmart.com': {
+        'password': 'demo123',
+        'name': 'Demo User',
+        'phone': '+1234567890',
+        'address': '123 Main St, City, State 12345'
+    }
+}
 
 # NFT Badge tiers and requirements
 NFT_TIERS = {
@@ -75,6 +84,11 @@ def get_cart(user_id):
         cart_db[user_id] = []
     return cart_db[user_id]
 
+def get_wishlist(user_id):
+    if user_id not in wishlist_db:
+        wishlist_db[user_id] = []
+    return wishlist_db[user_id]
+
 def check_monthly_reset(user_data):
     current_month = datetime.now().replace(day=1)
     if user_data['last_reset'] < current_month:
@@ -120,14 +134,17 @@ def index():
     check_monthly_reset(user_data)
     cart = get_cart(user_id)
     
-    featured_products = REGULAR_PRODUCTS[:8]
-    featured_eco_products = ECO_PRODUCTS[:4]
+    featured_products = REGULAR_PRODUCTS[:12]
+    featured_eco_products = ECO_PRODUCTS[:6]
+    
+    wishlist = get_wishlist(user_id)
     
     return render_template('index.html', 
                          user_data=user_data, 
                          featured_products=featured_products,
                          featured_eco_products=featured_eco_products,
-                         cart_count=len(cart))
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
 
 @app.route('/ecoproducts')
 def ecoproducts():
@@ -400,6 +417,144 @@ def mint_nft():
         'mint_hash': mint_hash,
         'badge': badge_data
     })
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+        
+        if email in accounts_db and accounts_db[email]['password'] == password:
+            session['user_id'] = email
+            session['user_name'] = accounts_db[email]['name']
+            session['logged_in'] = True
+            return jsonify({'success': True, 'message': 'Login successful'})
+        else:
+            return jsonify({'success': False, 'message': 'Invalid email or password'})
+    
+    user_id = session.get('user_id', 'demo_user')
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    
+    return render_template('login.html', cart_count=len(cart), wishlist_count=len(wishlist))
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+        name = data.get('name')
+        phone = data.get('phone', '')
+        
+        if email in accounts_db:
+            return jsonify({'success': False, 'message': 'Email already exists'})
+        
+        accounts_db[email] = {
+            'password': password,
+            'name': name,
+            'phone': phone,
+            'address': ''
+        }
+        
+        session['user_id'] = email
+        session['user_name'] = name
+        session['logged_in'] = True
+        
+        return jsonify({'success': True, 'message': 'Account created successfully'})
+    
+    user_id = session.get('user_id', 'demo_user')
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    
+    return render_template('signup.html', cart_count=len(cart), wishlist_count=len(wishlist))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/account')
+def account():
+    user_id = session.get('user_id', 'demo_user')
+    user_data = get_user_data(user_id)
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    
+    account_info = accounts_db.get(user_id, {
+        'name': 'Demo User',
+        'phone': '',
+        'address': ''
+    })
+    
+    return render_template('account.html', 
+                         user_data=user_data,
+                         account_info=account_info,
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
+
+@app.route('/wishlist')
+def wishlist():
+    user_id = session.get('user_id', 'demo_user')
+    user_data = get_user_data(user_id)
+    cart = get_cart(user_id)
+    wishlist_items = get_wishlist(user_id)
+    
+    # Get full product details for wishlist items
+    wishlist_details = []
+    for item in wishlist_items:
+        if item['type'] == 'eco':
+            product = next((p for p in ECO_PRODUCTS if p['id'] == item['id']), None)
+        else:
+            product = next((p for p in REGULAR_PRODUCTS if p['id'] == item['id']), None)
+        
+        if product:
+            wishlist_details.append({
+                'product': product,
+                'type': item['type']
+            })
+    
+    return render_template('wishlist.html',
+                         user_data=user_data,
+                         wishlist_items=wishlist_details,
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist_items))
+
+@app.route('/add_to_wishlist', methods=['POST'])
+def add_to_wishlist():
+    user_id = session.get('user_id', 'demo_user')
+    data = request.json
+    product_id = data.get('product_id')
+    product_type = data.get('type', 'regular')
+    
+    wishlist = get_wishlist(user_id)
+    
+    # Check if item already in wishlist
+    existing_item = next((item for item in wishlist if item['id'] == product_id and item['type'] == product_type), None)
+    
+    if not existing_item:
+        wishlist.append({
+            'id': product_id,
+            'type': product_type
+        })
+        return jsonify({'success': True, 'wishlist_count': len(wishlist), 'message': 'Added to wishlist'})
+    else:
+        return jsonify({'success': False, 'message': 'Item already in wishlist'})
+
+@app.route('/remove_from_wishlist', methods=['POST'])
+def remove_from_wishlist():
+    user_id = session.get('user_id', 'demo_user')
+    data = request.json
+    product_id = data.get('product_id')
+    product_type = data.get('type', 'regular')
+    
+    wishlist = get_wishlist(user_id)
+    
+    # Remove item from wishlist
+    wishlist[:] = [item for item in wishlist if not (item['id'] == product_id and item['type'] == product_type)]
+    
+    return jsonify({'success': True, 'wishlist_count': len(wishlist)})
 
 @app.route('/api/user_stats')
 def user_stats():

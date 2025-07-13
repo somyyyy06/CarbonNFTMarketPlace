@@ -95,9 +95,14 @@
                                 <button class="btn add-to-cart-btn" onclick="addToCart({{ product.id }}, 'regular')">
                                     <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                                 </button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="purchaseProduct({{ product.id }}, 'regular')">
-                                    Buy Now
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="purchaseProduct({{ product.id }}, 'regular')">
+                                        Buy Now
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="addToWishlist({{ product.id }}, 'regular')" title="Add to Wishlist">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -161,9 +166,14 @@
                                 <button class="btn eco-green text-white" onclick="addToCart({{ product.id }}, 'eco')">
                                     <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                                 </button>
-                                <button class="btn btn-outline-success btn-sm" onclick="purchaseProduct({{ product.id }}, 'eco')">
-                                    Buy Now & Earn NFT
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-success btn-sm flex-grow-1" onclick="purchaseProduct({{ product.id }}, 'eco')">
+                                        Buy Now & Earn NFT
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="addToWishlist({{ product.id }}, 'eco')" title="Add to Wishlist">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
