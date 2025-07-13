@@ -151,6 +151,7 @@ def ecoproducts():
     user_id = session.get('user_id', 'demo_user')
     user_data = get_user_data(user_id)
     cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
     
     page = request.args.get('page', 1, type=int)
     per_page = 20
@@ -165,6 +166,7 @@ def ecoproducts():
                          eco_products=products,
                          user_data=user_data,
                          cart_count=len(cart),
+                         wishlist_count=len(wishlist),
                          page=page,
                          has_next=has_next,
                          has_prev=has_prev)
@@ -175,6 +177,7 @@ def rewards():
     user_data = get_user_data(user_id)
     check_monthly_reset(user_data)
     cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
     
     # Get user's NFT badges
     user_nft_badges = []
@@ -206,13 +209,15 @@ def rewards():
                          user_data=user_data, 
                          tier_progress=tier_progress,
                          user_nft_badges=user_nft_badges,
-                         cart_count=len(cart))
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
 
 @app.route('/nft-marketplace')
 def nft_marketplace():
     user_id = session.get('user_id', 'demo_user')
     user_data = get_user_data(user_id)
     cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
     
     # Get all minted NFTs for marketplace
     marketplace_nfts = []
@@ -223,13 +228,15 @@ def nft_marketplace():
     return render_template('nft_marketplace.html',
                          user_data=user_data,
                          marketplace_nfts=marketplace_nfts,
-                         cart_count=len(cart))
+                         cart_count=len(cart),
+                         wishlist_count=len(wishlist))
 
 @app.route('/cart')
 def cart():
     user_id = session.get('user_id', 'demo_user')
     user_data = get_user_data(user_id)
     cart_items = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
     
     # Get full product details for cart items
     cart_details = []
@@ -265,6 +272,7 @@ def cart():
                          user_data=user_data,
                          cart_items=cart_details,
                          cart_count=len(cart_items),
+                         wishlist_count=len(wishlist),
                          total_price=total_price,
                          total_co2_saved=total_co2_saved)
 

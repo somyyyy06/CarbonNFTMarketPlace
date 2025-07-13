@@ -1,4 +1,3 @@
-
 /* Additional custom styles for the application */
 
 .hero-banner {
@@ -149,4 +148,70 @@
     .nav-menu .nav-link {
         color: #fff;
     }
+}
+
+/* Additional styles for EcoMart NFT App */
+.product-card {
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.eco-product-card {
+    border: 2px solid #22c55e;
+}
+
+.eco-badge {
+    background-color: #22c55e;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.co2-savings {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.nft-badge {
+    border: 3px solid var(--badge-color, #ccc);
+    background: linear-gradient(135deg, var(--badge-color, #f8f9fa), var(--badge-color-dark, #e9ecef));
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.nft-badge.earned {
+    box-shadow: 0 0 20px var(--badge-color, #ccc);
+}
+
+.nft-badge.locked {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+}
+
+.badge-icon {
+    font-size: 3rem;
+    margin: 20px 0;
+}
+
+.mint-button {
+    background: linear-gradient(135deg, #6f42c1, #5a3d9a);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.mint-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
 }
