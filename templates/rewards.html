@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block content %}
@@ -20,7 +19,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- NFT Badge Tiers -->
     <div class="row mb-5">
         {% for tier_id, tier in tier_progress.items() %}
@@ -35,7 +34,7 @@
                             <i class="fas fa-lock"></i>
                         {% endif %}
                     </div>
-                    
+
                     <div class="badge-icon">
                         {% if tier_id == 'green_starter' %}
                             <i class="fas fa-seedling"></i>
@@ -47,10 +46,10 @@
                             <i class="fas fa-crown"></i>
                         {% endif %}
                     </div>
-                    
+
                     <h5 class="card-title">{{ tier.name }}</h5>
                     <p class="small">Save {{ tier.co2_required }}kg CO₂</p>
-                    
+
                     {% if tier.earned %}
                         <div class="badge bg-light text-dark mb-3">Earned!</div>
                         <button class="btn mint-button w-100" onclick="mintNFT('{{ tier_id }}')">
@@ -70,7 +69,7 @@
         </div>
         {% endfor %}
     </div>
-    
+
     <!-- Coming Soon: NFT Minting -->
     <div class="row mb-4">
         <div class="col-12">
@@ -94,7 +93,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Your Earned NFT Badges -->
     {% if user_nft_badges %}
     <div class="row mb-4">
@@ -103,7 +102,7 @@
                 <i class="fas fa-trophy me-2 text-warning"></i>
                 Your Earned NFT Badges
             </h4>
-            
+
             <div class="row">
                 {% for badge in user_nft_badges %}
                 <div class="col-md-6 col-lg-4 mb-4">
@@ -117,7 +116,7 @@
                                     <span class="badge bg-warning">Ready to Mint</span>
                                 {% endif %}
                             </div>
-                            
+
                             <div class="text-center mb-3">
                                 <div class="fs-1">
                                     {% if badge.tier == 'green_starter' %}🌱
@@ -127,7 +126,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            
+
                             <div class="small text-muted mb-3">
                                 <div><strong>CO₂ Saved:</strong> {{ "%.1f"|format(badge.co2_saved) }} kg</div>
                                 <div><strong>Earned:</strong> {{ badge.earned_date[:10] }}</div>
@@ -135,7 +134,7 @@
                                 <div><strong>Hash:</strong> {{ badge.mint_hash[:16] }}...</div>
                                 {% endif %}
                             </div>
-                            
+
                             {% if not badge.get('minted') %}
                             <button class="btn mint-button w-100" onclick="mintNFT('{{ badge.id }}')">
                                 <i class="fas fa-coins me-2"></i>
@@ -155,7 +154,7 @@
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Stats Overview -->
     <div class="row">
         <div class="col-md-4 mb-4">
@@ -169,7 +168,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4 mb-4">
             <div class="card text-center">
                 <div class="card-body">
@@ -181,7 +180,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4 mb-4">
             <div class="card text-center">
                 <div class="card-body">
@@ -194,7 +193,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Call to Action -->
     <div class="row">
         <div class="col-12">
@@ -223,11 +222,11 @@ async function mintNFT(badgeId) {
         if (!badgeId) {
             throw new Error('Badge ID is required');
         }
-        
+
         // Check if this is a tier ID or badge ID
         let isEarnedBadge = false;
         let targetBadgeId = badgeId;
-        
+
         // If it's a tier ID (for earned badges), we need to find the actual badge
         if (typeof badgeId === 'string' && ['green_starter', 'eco_warrior', 'planet_protector', 'climate_champion', 'earth_guardian'].includes(badgeId)) {
             isEarnedBadge = true;
@@ -236,7 +235,7 @@ async function mintNFT(badgeId) {
         }
 
         // First, connect MetaMask
-        Swal.fire({
+        const result = await Swal.fire({
             title: 'Connect MetaMask',
             text: 'Please connect your MetaMask wallet to mint the NFT',
             icon: 'info',
@@ -245,150 +244,145 @@ async function mintNFT(badgeId) {
             cancelButtonText: 'Cancel',
             confirmButtonColor: '#6f42c1',
             cancelButtonColor: '#6c757d'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    // Show connecting status
-                    Swal.fire({
-                        title: 'Connecting to MetaMask...',
-                        text: 'Please approve the connection in MetaMask',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                // Show connecting status
+                Swal.fire({
+                    title: 'Connecting to MetaMask...',
+                    text: 'Please approve the connection in MetaMask',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Connect to MetaMask
+                const account = await connectMetaMask();
+
+                // Confirm minting
+                const mintResult = await Swal.fire({
+                    title: 'Mint NFT Badge',
+                    html: `
+                        <div class="text-center">
+                            <p>Ready to mint your NFT badge on Polygon network?</p>
+                            <small class="text-muted">This will require a small transaction fee (~0.001 MATIC)</small>
+                        </div>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Mint NFT',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#ffc220',
+                    cancelButtonColor: '#6c757d'
+                });
+
+                if (mintResult.isConfirmed) {
+                    // Get badge data from backend first
+                    const response = await fetch('/mint_nft', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            badge_id: targetBadgeId,
+                            wallet_address: account,
+                            is_tier_id: isEarnedBadge
+                        })
                     });
 
-                    // Connect to MetaMask
-                    const account = await connectMetaMask();
-                    
-                    // Confirm minting
-                    Swal.fire({
-                        title: 'Mint NFT Badge',
-                        html: `
-                            <div class="text-center">
-                                <p>Connected to: <code>${account.substring(0, 6)}...${account.substring(38)}</code></p>
-                                <p>Ready to mint your NFT badge on Polygon network?</p>
-                                <small class="text-muted">This will require a small transaction fee (~0.001 MATIC)</small>
-                            </div>
-                        `,
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: 'Mint NFT',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#ffc220',
-                        cancelButtonColor: '#6c757d'
-                    }).then(async (mintResult) => {
-                        if (mintResult.isConfirmed) {
-                            // Get badge data from backend first
-                            const response = await fetch('/mint_nft', {
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Show blockchain status
+                        Swal.fire({
+                            title: 'Minting NFT on Blockchain...',
+                            html: `
+                                <div class="text-center">
+                                    <p>Please confirm the transaction in MetaMask</p>
+                                    <p class="small text-muted">Minting your ${data.badge.name} badge...</p>
+                                </div>
+                            `,
+                            allowOutsideClick: false,
+                            showConfirmButton: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        try {
+                            // Mint on blockchain
+                            const txHash = await mintNFTOnBlockchain(data.badge);
+
+                            // Update backend with transaction
+                            await fetch('/update_nft_transaction', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({
-                                    badge_id: targetBadgeId,
-                                    wallet_address: account,
-                                    is_tier_id: isEarnedBadge
+                                    badge_id: data.badge.id,
+                                    transaction_hash: txHash,
+                                    wallet_address: account
                                 })
                             });
-                            
-                            const data = await response.json();
-                            
-                            if (data.success) {
-                                // Show blockchain minting process
-                                Swal.fire({
-                                    title: 'Minting NFT on Blockchain...',
-                                    html: `
-                                        <div class="text-center">
-                                            <p>Please confirm the transaction in MetaMask</p>
-                                            <p class="small text-muted">Minting fee: ~0.001 MATIC</p>
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
+
+                            // Show success
+                            Swal.fire({
+                                icon: 'success',
+                                title: '🎉 NFT Minted Successfully!',
+                                html: `
+                                    <div class="text-center">
+                                        <p><strong>${data.badge.name}</strong> has been minted to your wallet!</p>
+                                        <p class="small">Transaction Hash: <code>${txHash}</code></p>
+                                        <hr>
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <a href="https://mumbai.polygonscan.com/tx/${txHash}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                View on PolygonScan
+                                            </a>
+                                            <a href="/nft-marketplace" class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-coins me-1"></i>
+                                                View in Marketplace
+                                            </a>
                                         </div>
-                                    `,
-                                    allowOutsideClick: false,
-                                    allowEscapeKey: false,
-                                    showConfirmButton: false
-                                });
-                                
-                                try {
-                                    // Mint on blockchain
-                                    const txHash = await mintNFTOnBlockchain(data.badge);
-                                    
-                                    // Update backend with real transaction hash
-                                    await fetch('/update_nft_transaction', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            badge_id: data.badge.id,
-                                            transaction_hash: txHash,
-                                            wallet_address: account
-                                        })
-                                    });
-                                    
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'NFT Minted Successfully!',
-                                        html: `
-                                            <div class="text-center">
-                                                <div class="fs-1 mb-3">🎉</div>
-                                                <p>Your <strong>${data.badge.name}</strong> badge has been minted as an NFT!</p>
-                                                <div class="small text-muted mb-3">
-                                                    <strong>Transaction Hash:</strong><br>
-                                                    <code style="word-break: break-all;">${txHash}</code>
-                                                </div>
-                                                <div class="d-flex gap-2 justify-content-center">
-                                                    <a href="https://polygonscan.com/tx/${txHash}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                        <i class="fas fa-external-link-alt me-1"></i>
-                                                        View on PolygonScan
-                                                    </a>
-                                                    <a href="/nft-marketplace" class="btn btn-outline-success btn-sm">
-                                                        <i class="fas fa-coins me-1"></i>
-                                                        View in Marketplace
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        `,
-                                        confirmButtonText: 'Awesome!',
-                                        confirmButtonColor: '#22c55e'
-                                    }).then(() => {
-                                        location.reload();
-                                    });
-                                } catch (blockchainError) {
-                                    console.error('Blockchain error:', blockchainError);
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Blockchain Transaction Failed',
-                                        text: blockchainError.message || 'Transaction was rejected or failed',
-                                        confirmButtonColor: '#dc3545'
-                                    });
-                                }
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Minting Failed',
-                                    text: data.message || 'Badge not found or already minted',
-                                    confirmButtonColor: '#dc3545'
-                                });
-                            }
+                                    </div>
+                                `,
+                                confirmButtonText: 'Awesome!',
+                                confirmButtonColor: '#22c55e'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } catch (blockchainError) {
+                            console.error('Blockchain error:', blockchainError);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Blockchain Transaction Failed',
+                                text: blockchainError.message || 'Transaction was rejected or failed',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
-                    });
-                } catch (metaMaskError) {
-                    console.error('MetaMask error:', metaMaskError);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'MetaMask Connection Failed',
-                        text: metaMaskError.message || 'Please make sure MetaMask is installed and unlocked',
-                        confirmButtonColor: '#dc3545'
-                    });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Minting Failed',
+                            text: data.message || 'Badge not found or already minted',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
                 }
+            } catch (metaMaskError) {
+                console.error('MetaMask error:', metaMaskError);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'MetaMask Connection Failed',
+                    text: metaMaskError.message || 'Please make sure MetaMask is installed and unlocked. If you\'re having network issues, try switching to Polygon Mumbai Testnet manually in MetaMask.',
+                    confirmButtonColor: '#dc3545'
+                });
             }
-        });
+        }
     } catch (error) {
         console.error('General error:', error);
         Swal.fire({

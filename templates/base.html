@@ -479,31 +479,43 @@
                     
                     // Switch to Polygon network (chain ID: 0x89 for mainnet, 0x13881 for testnet)
                     const targetChainId = '0x13881'; // Polygon Mumbai testnet
+                    
                     try {
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: targetChainId }],
-                        });
-                    } catch (switchError) {
-                        // This error code indicates that the chain has not been added to MetaMask
-                        if (switchError.code === 4902) {
-                            await window.ethereum.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [{
-                                    chainId: targetChainId,
-                                    chainName: 'Polygon Mumbai Testnet',
-                                    nativeCurrency: {
-                                        name: 'MATIC',
-                                        symbol: 'MATIC',
-                                        decimals: 18
-                                    },
-                                    rpcUrls: ['https://rpc-mumbai.maticvigil.com/'],
-                                    blockExplorerUrls: ['https://mumbai.polygonscan.com/']
-                                }]
-                            });
-                        } else {
-                            console.warn('Could not switch to Polygon network:', switchError);
+                        // First, check current chain
+                        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+                        
+                        if (currentChainId !== targetChainId) {
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_switchEthereumChain',
+                                    params: [{ chainId: targetChainId }],
+                                });
+                            } catch (switchError) {
+                                // This error code indicates that the chain has not been added to MetaMask
+                                if (switchError.code === 4902) {
+                                    await window.ethereum.request({
+                                        method: 'wallet_addEthereumChain',
+                                        params: [{
+                                            chainId: targetChainId,
+                                            chainName: 'Polygon Mumbai Testnet',
+                                            nativeCurrency: {
+                                                name: 'MATIC',
+                                                symbol: 'MATIC',
+                                                decimals: 18
+                                            },
+                                            rpcUrls: ['https://rpc-mumbai.maticvigil.com/'],
+                                            blockExplorerUrls: ['https://mumbai.polygonscan.com/']
+                                        }]
+                                    });
+                                } else {
+                                    console.warn('Could not switch to Polygon network:', switchError);
+                                    // Continue anyway - user can manually switch
+                                }
+                            }
                         }
+                    } catch (networkError) {
+                        console.warn('Network switching failed:', networkError);
+                        // Continue with connection even if network switch fails
                     }
                     
                     return userAccount;
@@ -556,11 +568,16 @@
                 // For demo purposes, we'll simulate the blockchain transaction
                 // In a real implementation, you would deploy the actual contract
                 const simulateTransaction = () => {
-                    return new Promise((resolve) => {
+                    return new Promise((resolve, reject) => {
                         setTimeout(() => {
-                            // Generate a fake transaction hash
-                            const fakeHash = '0x' + Math.random().toString(16).substring(2, 66);
-                            resolve(fakeHash);
+                            // Simulate occasional network issues for realism
+                            if (Math.random() < 0.9) { // 90% success rate
+                                // Generate a fake transaction hash
+                                const fakeHash = '0x' + Math.random().toString(16).substring(2, 66);
+                                resolve(fakeHash);
+                            } else {
+                                reject(new Error('Network timeout - please try again'));
+                            }
                         }, 2000);
                     });
                 };
@@ -587,6 +604,8 @@
                     throw new Error('Transaction was rejected by user');
                 } else if (error.message && error.message.includes('insufficient funds')) {
                     throw new Error('Insufficient MATIC balance for transaction');
+                } else if (error.message && error.message.includes('timeout')) {
+                    throw new Error('Network timeout - please check your connection and try again');
                 } else {
                     throw new Error('Minting failed: ' + (error.message || 'Unknown error'));
                 }
