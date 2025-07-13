@@ -109,9 +109,11 @@ def check_and_award_nft_badges(user_id, user_data):
                 'name': tier_info['name'],
                 'co2_saved': total_co2,
                 'earned_date': datetime.now().isoformat(),
+                'owner': user_id,
+                'minted': False,
                 'metadata': {
                     'description': f'NFT Badge for saving {tier_info["co2_required"]}+ kg CO2',
-                    'image_url': f'/static/badges/{tier_id}.png',
+                    'image_url': f'/static/images/badges/{tier_id}.png',
                     'attributes': [
                         {'trait_type': 'CO2 Saved', 'value': f'{total_co2} kg'},
                         {'trait_type': 'Tier', 'value': tier_info['name']},
@@ -681,6 +683,17 @@ def user_stats():
     check_monthly_reset(user_data)
     
     return jsonify(user_data)
+
+@app.route('/api/user_badges')
+def user_badges():
+    user_id = session.get('user_id', 'demo_user')
+    user_badges = []
+    
+    for badge_id, badge_data in nft_badges_db.items():
+        if badge_data.get('owner') == user_id:
+            user_badges.append(badge_data)
+    
+    return jsonify({'badges': user_badges})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

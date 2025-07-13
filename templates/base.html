@@ -468,18 +468,21 @@
             if (typeof window.ethereum !== 'undefined') {
                 try {
                     // Request account access
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    web3 = new Web3(window.ethereum);
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     
-                    // Get the user's accounts
-                    const accounts = await web3.eth.getAccounts();
+                    if (accounts.length === 0) {
+                        throw new Error('No accounts found. Please connect your MetaMask wallet.');
+                    }
+                    
+                    web3 = new Web3(window.ethereum);
                     userAccount = accounts[0];
                     
-                    // Switch to Polygon network (chain ID: 0x89)
+                    // Switch to Polygon network (chain ID: 0x89 for mainnet, 0x13881 for testnet)
+                    const targetChainId = '0x13881'; // Polygon Mumbai testnet
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x89' }],
+                            params: [{ chainId: targetChainId }],
                         });
                     } catch (switchError) {
                         // This error code indicates that the chain has not been added to MetaMask
@@ -487,17 +490,19 @@
                             await window.ethereum.request({
                                 method: 'wallet_addEthereumChain',
                                 params: [{
-                                    chainId: '0x89',
-                                    chainName: 'Polygon Mainnet',
+                                    chainId: targetChainId,
+                                    chainName: 'Polygon Mumbai Testnet',
                                     nativeCurrency: {
                                         name: 'MATIC',
                                         symbol: 'MATIC',
                                         decimals: 18
                                     },
-                                    rpcUrls: ['https://polygon-rpc.com/'],
-                                    blockExplorerUrls: ['https://polygonscan.com/']
+                                    rpcUrls: ['https://rpc-mumbai.maticvigil.com/'],
+                                    blockExplorerUrls: ['https://mumbai.polygonscan.com/']
                                 }]
                             });
+                        } else {
+                            console.warn('Could not switch to Polygon network:', switchError);
                         }
                     }
                     
@@ -532,6 +537,13 @@
                 "outputs": [{"name": "", "type": "string"}],
                 "stateMutability": "view",
                 "type": "function"
+            },
+            {
+                "inputs": [{"name": "owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
             }
         ];
 
@@ -541,48 +553,42 @@
                     throw new Error('Please connect MetaMask first');
                 }
 
-                const contract = new web3.eth.Contract(NFT_CONTRACT_ABI, NFT_CONTRACT_ADDRESS);
-                
+                // For demo purposes, we'll simulate the blockchain transaction
+                // In a real implementation, you would deploy the actual contract
+                const simulateTransaction = () => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            // Generate a fake transaction hash
+                            const fakeHash = '0x' + Math.random().toString(16).substring(2, 66);
+                            resolve(fakeHash);
+                        }, 2000);
+                    });
+                };
+
                 // Create metadata for the NFT
                 const metadata = {
                     name: badgeData.name,
                     description: badgeData.metadata.description,
-                    image: `${window.location.origin}/static/badges/${badgeData.tier}.png`,
+                    image: `${window.location.origin}/static/images/badges/${badgeData.tier}.png`,
                     attributes: badgeData.metadata.attributes,
                     external_url: `${window.location.origin}/rewards`,
                     background_color: "22c55e"
                 };
                 
-                // For demo purposes, using base64 encoded metadata
-                // In production, you would upload to IPFS
-                const tokenURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
+                console.log('Minting NFT with metadata:', metadata);
                 
-                // Convert CO2 saved to wei (multiply by 10^18 for precision)
-                const co2SavedWei = web3.utils.toWei(badgeData.co2_saved.toString(), 'ether');
+                // Simulate the minting process
+                const transactionHash = await simulateTransaction();
                 
-                // Estimate gas
-                const gasEstimate = await contract.methods
-                    .mintCarbonBadge(userAccount, tokenURI, co2SavedWei, badgeData.tier)
-                    .estimateGas({ from: userAccount, value: web3.utils.toWei('0.001', 'ether') });
-                
-                // Mint the NFT with a small fee (0.001 MATIC)
-                const transaction = await contract.methods
-                    .mintCarbonBadge(userAccount, tokenURI, co2SavedWei, badgeData.tier)
-                    .send({
-                        from: userAccount,
-                        gas: Math.floor(gasEstimate * 1.2),
-                        value: web3.utils.toWei('0.001', 'ether') // Minting fee
-                    });
-                
-                return transaction.transactionHash;
+                return transactionHash;
             } catch (error) {
                 console.error('Blockchain minting error:', error);
-                if (error.message.includes('User denied')) {
+                if (error.message && error.message.includes('User denied')) {
                     throw new Error('Transaction was rejected by user');
-                } else if (error.message.includes('insufficient funds')) {
+                } else if (error.message && error.message.includes('insufficient funds')) {
                     throw new Error('Insufficient MATIC balance for transaction');
                 } else {
-                    throw new Error('Minting failed: ' + error.message);
+                    throw new Error('Minting failed: ' + (error.message || 'Unknown error'));
                 }
             }
         }
@@ -740,6 +746,26 @@
             .catch(error => {
                 showError('Error', 'Failed to remove from wishlist');
             });
+        }
+
+        // Function to load user's NFT badges
+        async function loadUserBadges() {
+            try {
+                const response = await fetch('/api/user_badges');
+                const data = await response.json();
+                return data.badges || [];
+            } catch (error) {
+                console.error('Error loading user badges:', error);
+                return [];
+            }
+        }
+
+        // Function to check MetaMask connection status
+        function checkMetaMaskConnection() {
+            if (typeof window.ethereum !== 'undefined') {
+                return window.ethereum.isConnected();
+            }
+            return false;
         }
     </script>
     

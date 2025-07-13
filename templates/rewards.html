@@ -219,6 +219,11 @@
 <script>
 async function mintNFT(badgeId) {
     try {
+        // Validate badge ID
+        if (!badgeId) {
+            throw new Error('Badge ID is required');
+        }
+        
         // Check if this is a tier ID or badge ID
         let isEarnedBadge = false;
         let targetBadgeId = badgeId;
