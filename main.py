@@ -60,7 +60,7 @@ ECO_PRODUCTS = [
     {'id': 109, 'name': 'LED Light Bulbs (4-pack)', 'price': 12.99, 'co2_saved': 8.7, 'category': 'home', 'tags': ['Energy Efficient', 'Long Lasting'], 'industry_avg': 4.2, 'image': '/static/eco_prod/eco_bulb.jpeg', 'rating': 4.6, 'reviews': 567},
     {'id': 110, 'name': 'Recycled Paper Towels', 'price': 8.49, 'co2_saved': 1.2, 'category': 'household', 'tags': ['Recycled Paper', 'Compostable'], 'industry_avg': 2.1, 'image': '/static/eco_prod/eco_towels.jpeg', 'rating': 4.1, 'reviews': 298},
 ] + [
-    {'id': i+111, 'name': f'Eco Product {i+11}', 'price': round(random.uniform(9.99, 199.99), 2), 'co2_saved': round(random.uniform(1.0, 50.0), 1), 'category': random.choice(['clothing', 'electronics', 'home', 'personal_care', 'lifestyle']), 'tags': random.sample(['Organic', 'Recycled', 'Biodegradable', 'Solar Powered', 'Carbon Neutral'], 2), 'industry_avg': round(random.uniform(5.0, 60.0), 1), 'image': f'/static/images/eco-product{i+11}.jpg', 'rating': round(random.uniform(4.0, 4.9), 1), 'reviews': random.randint(50, 400)}
+    {'id': i+111, 'name': f'Eco Product {i+11}', 'price': round(random.uniform(9.99, 199.99), 2), 'co2_saved': round(random.uniform(1.0, 50.0), 1), 'category': random.choice(['clothing', 'electronics', 'home', 'personal_care', 'lifestyle']), 'tags': random.sample(['Organic', 'Recycled', 'Biodegradable', 'Solar Powered', 'Carbon Neutral'], 2), 'industry_avg': round(random.uniform(5.0, 60.0), 1), 'image': f'/static/eco_prod/Product{i+11}.jpeg', 'rating': round(random.uniform(4.0, 4.9), 1), 'reviews': random.randint(50, 400)}
     for i in range(40)  # Generate 40 more eco products for a total of 50
 ]
 
@@ -734,6 +734,20 @@ def user_badges():
             user_badges.append(badge_data)
     
     return jsonify({'badges': user_badges})
+
+@app.route('/api/cart_total')
+def cart_total():
+    user_id = session.get('user_id', 'demo_user')
+    cart_items = get_cart(user_id)
+    total_price = 0
+    for item in cart_items:
+        if item['type'] == 'eco':
+            product = next((p for p in ECO_PRODUCTS if p['id'] == item['id']), None)
+        else:
+            product = next((p for p in REGULAR_PRODUCTS if p['id'] == item['id']), None)
+        if product:
+            total_price += product['price'] * item['quantity']
+    return jsonify({'total_price': total_price})
 
 @app.route('/submit_feedback', methods=['POST'])
 def submit_feedback():
