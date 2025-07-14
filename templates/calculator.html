@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Carbon Footprint Calculator{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="mb-3">Carbon Footprint Calculator</h1>
+            <p>Get an estimate of your monthly carbon emissions</p>
+            <form id="carbon-form">
+                <div class="mb-3">
+                    <label for="transport_miles" class="form-label">Miles driven per month:</label>
+                    <input type="number" id="transport_miles" name="transport_miles" min="0" value="500" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="energy_kwh" class="form-label">Energy consumption (kWh per month):</label>
+                    <input type="number" id="energy_kwh" name="energy_kwh" min="0" value="800" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="meat_meals" class="form-label">Meat meals per month:</label>
+                    <input type="number" id="meat_meals" name="meat_meals" min="0" value="30" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-success">Calculate Footprint</button>
+            </form>
+            <div id="results" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('carbon-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = {
+        transport_miles: document.getElementById('transport_miles').value,
+        energy_kwh: document.getElementById('energy_kwh').value,
+        meat_meals: document.getElementById('meat_meals').value
+    };
+    fetch('/calculate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('results').innerHTML = `
+            <div class="alert alert-success">
+                <h3>Your Carbon Footprint</h3>
+                <p><strong>Monthly:</strong> ${data.monthly_emissions} kg CO₂</p>
+                <p><strong>Yearly:</strong> ${data.yearly_emissions} kg CO₂</p>
+                <p><strong>Assessment:</strong> ${data.comparison}</p>
+            </div>
+        `;
+    });
+});
+</script>
+{% endblock %} 

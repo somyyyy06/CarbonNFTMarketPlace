@@ -695,6 +695,7 @@ def returns():
             purchase_date = datetime.fromisoformat(purchase['timestamp'])
             days_since_purchase = (datetime.now() - purchase_date).days
             if days_since_purchase <= 30:
+                purchase['days_left'] = max(0, 30 - days_since_purchase)
                 returnable_orders.append(purchase)
     
     return render_template('returns.html',
@@ -789,6 +790,95 @@ def return_product():
         user_data['eco_products_purchased'] -= 1
     
     return jsonify({'success': True, 'message': 'Return processed successfully!'})
+
+# Add carbon helper data and route
+CARBON_TIPS = {
+    'transportation': [
+        'Use public transport, walk, or bike instead of driving',
+        'Consider carpooling or ride-sharing services',
+        'Work from home when possible to reduce commuting',
+        'Choose fuel-efficient or electric vehicles',
+        'Combine errands into one trip',
+        'Maintain your vehicle properly for better fuel efficiency'
+    ],
+    'energy': [
+        'Switch to LED bulbs throughout your home',
+        'Unplug electronics when not in use',
+        'Use programmable thermostats',
+        'Improve home insulation',
+        'Consider renewable energy sources like solar panels',
+        'Use energy-efficient appliances'
+    ],
+    'diet': [
+        'Reduce meat consumption, especially beef',
+        'Buy local and seasonal produce',
+        'Minimize food waste by meal planning',
+        'Choose organic foods when possible',
+        'Grow your own herbs and vegetables',
+        'Reduce packaging by buying in bulk'
+    ],
+    'consumption': [
+        'Buy only what you need',
+        'Choose quality items that last longer',
+        'Repair instead of replacing when possible',
+        'Buy second-hand or refurbished items',
+        'Recycle and compost properly',
+        'Reduce single-use plastics'
+    ]
+}
+
+CARBON_FACTS = [
+    'The average person produces about 4-5 tons of CO2 per year',
+    'Transportation accounts for about 29% of greenhouse gas emissions',
+    'Buildings are responsible for about 40% of energy consumption',
+    'Food production contributes to about 26% of global emissions',
+    'Recycling one ton of paper saves 3.3 cubic yards of landfill space'
+]
+
+@app.route('/services')
+def services():
+    user_id = session.get('user_id', 'demo_user')
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    return render_template('services.html', tips=CARBON_TIPS, facts=CARBON_FACTS, cart_count=len(cart), wishlist_count=len(wishlist))
+
+@app.route('/calculator')
+def calculator():
+    user_id = session.get('user_id', 'demo_user')
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    return render_template('calculator.html', cart_count=len(cart), wishlist_count=len(wishlist))
+
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    data = request.json
+    transport_emissions = float(data.get('transport_miles', 0)) * 0.4  # kg CO2 per mile
+    energy_emissions = float(data.get('energy_kwh', 0)) * 0.5  # kg CO2 per kWh
+    diet_emissions = float(data.get('meat_meals', 0)) * 2.5  # kg CO2 per meat meal
+    total_monthly = transport_emissions + energy_emissions + diet_emissions
+    total_yearly = total_monthly * 12
+    return jsonify({
+        'monthly_emissions': round(total_monthly, 2),
+        'yearly_emissions': round(total_yearly, 2),
+        'comparison': get_comparison(total_yearly)
+    })
+
+def get_comparison(yearly_emissions):
+    if yearly_emissions < 3000:
+        return "Below average! You're doing great for the environment."
+    elif yearly_emissions < 5000:
+        return "Around average. There's room for improvement."
+    else:
+        return "Above average. Consider implementing more eco-friendly practices."
+
+@app.route('/tips/<category>')
+def category_tips(category):
+    user_id = session.get('user_id', 'demo_user')
+    cart = get_cart(user_id)
+    wishlist = get_wishlist(user_id)
+    if category in CARBON_TIPS:
+        return render_template('tips.html', category=category, tips=CARBON_TIPS[category], cart_count=len(cart), wishlist_count=len(wishlist))
+    return "Category not found", 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

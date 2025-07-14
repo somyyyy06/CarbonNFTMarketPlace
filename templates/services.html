@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Sustainability Services - Carbon Helper{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4 text-center"><span class="me-2">🌱</span>Sustainability Services</h1>
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h2 class="h4 mb-3 text-primary"><i class="fas fa-globe-asia me-2"></i>Why Reduce Your Carbon Footprint?</h2>
+                    <p class="mb-0">Your carbon footprint is the total amount of greenhouse gases you produce directly and indirectly through your daily activities. By reducing it, you help combat climate change, save money, and contribute to a healthier planet for future generations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h3 class="h5 mb-3 text-success"><i class="fas fa-lightbulb me-2"></i>Quick Tips by Category</h3>
+                    <div class="accordion" id="tipsAccordion">
+                        {% for category, tips_list in tips.items() %}
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="heading-{{ category }}">
+                                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ category }}" aria-expanded="false" aria-controls="collapse-{{ category }}">
+                                    <i class="fas fa-check-circle me-2"></i>{{ category.title() }}
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ category }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ category }}" data-bs-parent="#tipsAccordion">
+                                <div class="accordion-body">
+                                    <ul class="mb-0 ps-3">
+                                        {% for tip in tips_list %}
+                                        <li class="mb-2"><i class="fas fa-leaf text-success me-2"></i>{{ tip }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h3 class="h5 mb-3 text-info"><i class="fas fa-info-circle me-2"></i>Did You Know?</h3>
+                    <ul class="list-group list-group-flush">
+                        {% for fact in facts %}
+                        <li class="list-group-item bg-light"><i class="fas fa-seedling text-info me-2"></i>{{ fact }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-center">
+            <a href="/calculator" class="btn btn-lg btn-success shadow px-5 py-3 mt-3">
+                <i class="fas fa-calculator me-2"></i>Try the Carbon Footprint Calculator
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.title() }} Tips{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="mb-3">{{ category.title() }} Tips</h1>
+            <p>Here are some practical ways to reduce your carbon footprint in the {{ category }} category:</p>
+            <ul>
+                {% for tip in tips %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+            <a href="/services" class="btn btn-secondary mt-3">Back to Services</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

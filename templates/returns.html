@@ -52,8 +52,9 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="d-grid gap-2">
-                                {% set days_since = (order.timestamp | length > 10) and ((order.timestamp[:10] | strptime('%Y-%m-%d')) | int) or 0 %}
-                                <span class="badge bg-warning text-dark mb-2">Return Eligible ({{ 30 - ((order.timestamp[:10] | strptime('%Y-%m-%d')) | datetimeformat('%s') | int - now().timestamp() | int) // 86400 }} days left)</span>
+                                <span class="badge bg-warning text-dark mb-2">
+                                    Return Eligible ({{ order.days_left }} days left)
+                                </span>
                                 <button class="btn btn-primary btn-sm return-btn" data-order-id="{{ order.id }}" data-product-name="{{ order.product.name }}">
                                     Return Item
                                 </button>
